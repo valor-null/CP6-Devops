@@ -6,41 +6,37 @@
 <section class="page-header container">
     <h1>Transações</h1>
     <div class="d-flex gap-2">
-        <a class="btn btn-dark" asp-page="/Transacoes/Depositar" asp-route-id="@Model.IdConta"><i class="bi bi-arrow-down-circle me-1"></i>Depositar</a>
-        <a class="btn btn-outline-dark" asp-page="/Transacoes/Sacar" asp-route-id="@Model.IdConta"><i class="bi bi-arrow-up-circle me-1"></i>Sacar</a>
-        <a class="btn btn-outline-dark" asp-page="/Transacoes/Transferir" asp-route-id="@Model.IdConta"><i class="bi bi-arrow-left-right me-1"></i>Transferir</a>
+        <a class="btn btn-dark" asp-page="/Transacoes/Depositar" asp-route-IdConta="@Model.IdConta"><i class="bi bi-arrow-down-circle me-1"></i>Depositar</a>
+        <a class="btn btn-outline-dark" asp-page="/Transacoes/Sacar" asp-route-IdConta="@Model.IdConta"><i class="bi bi-arrow-up-circle me-1"></i>Sacar</a>
+        <a class="btn btn-outline-dark" asp-page="/Transacoes/Transferir" asp-route-IdConta="@Model.IdConta"><i class="bi bi-arrow-left-right me-1"></i>Transferir</a>
     </div>
 </section>
 
 <div class="container">
     <div class="card padded mb-3">
-        <form method="get" class="row g-3 align-items-end">
-            <div class="col-12 col-md-6 col-lg-4">
-                <label for="idConta" class="form-label">Conta</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-wallet2"></i></span>
-                    <input id="idConta" name="idConta" type="number" class="form-control" value="@(Model.IdConta == 0 ? null : Model.IdConta)" />
-                </div>
+        <form method="get" class="d-flex flex-column gap-3">
+            <div class="form-row">
+                <label asp-for="IdConta">IdConta</label>
+                <input asp-for="IdConta" type="number" class="form-control" />
             </div>
-            <div class="col-6 col-md-3 col-lg-2">
-                <label for="take" class="form-label">Take</label>
-                <input id="take" name="take" type="number" class="form-control" value="@(Model.Take == 0 ? 50 : Model.Take)" />
+            <div class="form-row">
+                <label asp-for="Take">Itens por página</label>
+                <select asp-for="Take" class="form-select">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
             </div>
-            <div class="col-6 col-md-3 col-lg-2">
-                <label for="skip" class="form-label">Skip</label>
-                <input id="skip" name="skip" type="number" class="form-control" value="@Model.Skip" />
-            </div>
-            <div class="col-12 col-lg-4 d-grid d-lg-flex justify-content-lg-end">
-                <button type="submit" class="btn btn-dark"><i class="bi bi-arrow-repeat me-1"></i>Carregar</button>
+            <div class="form-actions">
+                <a class="btn btn-outline-dark" asp-page="/Contas/Index"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+                <button type="submit" class="btn btn-dark"><i class="bi bi-search me-1"></i>Carregar</button>
             </div>
         </form>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(Model.Error))
     {
-        <div class="alert alert-warning border-2 border-warning container mb-3">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>@Model.Error
-        </div>
+        <div class="alert alert-danger border-2 border-dark" role="alert">@Model.Error</div>
     }
 
     <div class="card padded">
@@ -48,37 +44,67 @@
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Tipo</th>
+                        <th class="text-center">Data/Hora</th>
+                        <th class="text-center">Tipo</th>
                         <th class="text-end">Valor</th>
-                        <th class="text-end">Data/Hora</th>
                     </tr>
                 </thead>
                 <tbody>
-                @if (Model.Transacoes != null && Model.Transacoes.Count > 0)
+                @if (Model.IdConta <= 0)
                 {
-                    foreach (var t in Model.Transacoes)
+                    <tr>
+                        <td colspan="3" class="text-center py-3">Informe uma conta e clique em <strong>Carregar</strong>.</td>
+                    </tr>
+                }
+                else if (Model.Transacoes is { Count: > 0 })
+                {
+                    @foreach (var t in Model.Transacoes)
                     {
+                        var tipoLabel = t.Tipo?.ToUpperInvariant() == "CREDITO" ? "Crédito" : "Débito";
+                        var tipoClass = t.Tipo?.ToUpperInvariant() == "CREDITO" ? "badge text-bg-success" : "badge text-bg-danger";
                         <tr>
-                            <td class="align-middle text-capitalize">@t.Tipo</td>
+                            <td class="align-middle text-center">@t.DataHora.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="align-middle text-center"><span class="@tipoClass">@tipoLabel</span></td>
                             <td class="align-middle text-end">@t.Valor.ToString("N2")</td>
-                            <td class="align-middle text-end">@t.DataHora.ToString("dd/MM/yyyy HH:mm")</td>
                         </tr>
                     }
                 }
                 else
                 {
-                    if (Model.IdConta > 0 && string.IsNullOrWhiteSpace(Model.Error))
-                    {
-                        <tr><td colspan="3" class="text-center py-3">Nenhuma transação encontrada para esta conta.</td></tr>
-                    }
-                    else
-                    {
-                        for (int i = 0; i < 5; i++) { <tr><td colspan="3"><div class="skeleton"></div></td></tr>; }
-                        <tr><td colspan="3" class="text-center py-3">Informe uma conta e clique em <strong>Carregar</strong>.</td></tr>
-                    }
+                    <tr>
+                        <td colspan="3" class="text-center py-3">Nenhuma transação encontrada para esta conta.</td>
+                    </tr>
                 }
                 </tbody>
             </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <div class="text-muted">Conta: @(Model.IdConta > 0 ? Model.IdConta : 0)</div>
+            <div class="d-flex gap-2">
+                @{
+                    var prevSkip = Math.Max(0, Model.Skip - Model.Take);
+                    var nextSkip = Model.Skip + Model.Take;
+                    var hasPrev = Model.Skip > 0;
+                    var hasNext = Model.Transacoes.Count == Model.Take;
+                }
+                @if (hasPrev)
+                {
+                    <a class="btn btn-outline-dark" asp-route-IdConta="@Model.IdConta" asp-route-Take="@Model.Take" asp-route-Skip="@prevSkip"><i class="bi bi-chevron-left me-1"></i>Anterior</a>
+                }
+                else
+                {
+                    <a class="btn btn-outline-dark disabled"><i class="bi bi-chevron-left me-1"></i>Anterior</a>
+                }
+                @if (hasNext)
+                {
+                    <a class="btn btn-outline-dark" asp-route-IdConta="@Model.IdConta" asp-route-Take="@Model.Take" asp-route-Skip="@nextSkip">Próxima<i class="bi bi-chevron-right ms-1"></i></a>
+                }
+                else
+                {
+                    <a class="btn btn-outline-dark disabled">Próxima<i class="bi bi-chevron-right ms-1"></i></a>
+                }
+            </div>
         </div>
     </div>
 </div>

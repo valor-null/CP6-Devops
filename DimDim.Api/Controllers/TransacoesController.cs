@@ -1,87 +1,75 @@
-﻿using DimDim.Api.DTOs;
-using DimDim.Core.Entities;
-using DimDim.Core.Interfaces;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-namespace DimDim.Api.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-public class TransacoesController : ControllerBase
+namespace DimDim.Api.Controllers
 {
-    private readonly ITransacaoRepository _repo;
-
-    public TransacoesController(ITransacaoRepository repo)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class TransacoesController : ControllerBase
     {
-        _repo = repo;
-    }
+        private readonly DbContext _db;
 
-    [HttpPost("deposito")]
-    public async Task<ActionResult<Transacao>> Depositar(DepositoSaqueDto dto, CancellationToken ct)
-    {
-        try
+        public TransacoesController(DbContext db)
         {
-            var result = await _repo.DepositarAsync(dto.IdConta, dto.Valor, ct);
-            return Ok(result);
+            _db = db;
         }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return NotFound(ex.Message);
-        }
-    }
 
-    [HttpPost("saque")]
-    public async Task<ActionResult<Transacao>> Sacar(DepositoSaqueDto dto, CancellationToken ct)
-    {
-        try
+        [HttpGet]
+        public async Task<ActionResult<List<TransacaoDto>>> Get([FromQuery] int IdConta, [FromQuery] int Take = 10, [FromQuery] int Skip = 0)
         {
-            var result = await _repo.SacarAsync(dto.IdConta, dto.Valor, ct);
-            return Ok(result);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-        catch (InvalidOperationException ex) when (ex.Message.Contains("Saldo insuficiente", StringComparison.OrdinalIgnoreCase))
-        {
-            return Conflict(ex.Message);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return NotFound(ex.Message);
-        }
-    }
+            if (IdConta <= 0) return BadRequest();
 
-    [HttpPost("transferencia")]
-    public async Task<ActionResult<object>> Transferir(TransferenciaDto dto, CancellationToken ct)
-    {
-        try
-        {
-            var (debito, credito) = await _repo.TransferirAsync(dto.IdContaOrigem, dto.IdContaDestino, dto.Valor, ct);
-            return Ok(new { Debito = debito, Credito = credito });
+            var itens = await _db.Set<Transacao>().AsNoTracking()
+                .Where(t => t.IdConta == IdConta)
+                .OrderByDescending(t => t.DataHora)
+                .Skip(Skip)
+                .Take(Take)
+                .Select(t => new TransacaoDto
+                {
+                    DataHora = t.DataHora,
+                    Tipo = t.Tipo,
+                    Valor = t.Valor
+                })
+                .ToListAsync();
+
+            return itens;
         }
-        catch (ArgumentException ex)
+
+        [HttpGet("conta/{id}")]
+        public async Task<ActionResult<List<TransacaoDto>>> GetByConta([FromRoute] int id, [FromQuery] int take = 10, [FromQuery] int skip = 0)
         {
-            return BadRequest(ex.Message);
-        }
-        catch (InvalidOperationException ex) when (ex.Message.Contains("Saldo insuficiente", StringComparison.OrdinalIgnoreCase))
-        {
-            return Conflict(ex.Message);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return NotFound(ex.Message);
+            if (id <= 0) return BadRequest();
+
+            var itens = await _db.Set<Transacao>().AsNoTracking()
+                .Where(t => t.IdConta == id)
+                .OrderByDescending(t => t.DataHora)
+                .Skip(skip)
+                .Take(take)
+                .Select(t => new TransacaoDto
+                {
+                    DataHora = t.DataHora,
+                    Tipo = t.Tipo,
+                    Valor = t.Valor
+                })
+                .ToListAsync();
+
+            return itens;
         }
     }
 
-    [HttpGet("conta/{idConta:int}")]
-    public async Task<ActionResult<IEnumerable<Transacao>>> Extrato(int idConta, int take = 50, int skip = 0, CancellationToken ct = default)
+    public class TransacaoDto
     {
-        var list = await _repo.ListarPorContaAsync(idConta, take, skip, ct);
-        return Ok(list);
+        public DateTime DataHora { get; set; }
+        public string Tipo { get; set; }
+        public decimal Valor { get; set; }
+    }
+
+    public class Transacao
+    {
+        public int Id { get; set; }
+        public int IdConta { get; set; }
+        public DateTime DataHora { get; set; }
+        public string Tipo { get; set; }
+        public decimal Valor { get; set; }
     }
 }

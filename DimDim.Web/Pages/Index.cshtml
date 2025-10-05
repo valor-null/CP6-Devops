@@ -1,18 +1,11 @@
 ﻿@page
+@model DimDim.Web.Pages.IndexModel
 @{
-    ViewData["Title"] = "DimDim";
+    ViewData["Title"] = "Início";
 }
-<section class="title">Bem-vindo à DimDim</section>
-<section class="card" style="display:flex;flex-direction:column;gap:16px;">
-    <p style="margin:0;font-size:18px;">Escolha um módulo para começar:</p>
-    <div style="display:flex;flex-wrap:wrap;gap:12px;">
-        <a asp-page="/Clientes/Index" style="padding:12px 18px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;text-decoration:none;color:#111;">Lista de Clientes</a>
-        <a asp-page="/Clientes/Create" style="padding:12px 18px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;text-decoration:none;color:#111;">Novo Cliente</a>
-        <a asp-page="/Contas/Index" style="padding:12px 18px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;text-decoration:none;color:#111;">Lista de Contas</a>
-        <a asp-page="/Contas/Create" style="padding:12px 18px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;text-decoration:none;color:#111;">Nova Conta</a>
-        <a asp-page="/Transacoes/Index" style="padding:12px 18px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;text-decoration:none;color:#111;">Extrato</a>
-        <a asp-page="/Transacoes/Depositar" style="padding:12px 18px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;text-decoration:none;color:#111;">Depositar</a>
-        <a asp-page="/Transacoes/Sacar" style="padding:12px 18px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;text-decoration:none;color:#111;">Sacar</a>
-        <a asp-page="/Transacoes/Transferir" style="padding:12px 18px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;text-decoration:none;color:#111;">Transferir</a>
+<section class="container mt-4">
+    <div class="card padded text-center">
+        <h1 class="display-5 fw-bold mb-2">Bem-vindo ao DimDim</h1>
+        <p class="lead text-muted">Gerencie clientes, contas e transações em um só lugar.</p>
     </div>
 </section>
