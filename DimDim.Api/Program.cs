@@ -1,8 +1,6 @@
-using DimDim.Infrastructure;
 using DimDim.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
-using Swashbuckle.AspNetCore.Annotations;
 
 var builder = WebApplication.CreateBuilder(args);
 
