@@ -8,7 +8,10 @@ public class ContaCorrenteMap : IEntityTypeConfiguration<ContaCorrente>
 {
     public void Configure(EntityTypeBuilder<ContaCorrente> builder)
     {
-        builder.ToTable("ContaCorrente");
+        builder.ToTable("ContaCorrente", t =>
+        {
+            t.HasCheckConstraint("CK_ContaCorrente_TipoConta", "TipoConta IN ('Corrente','Poupanca')");
+        });
 
         builder.HasKey(x => x.IdConta);
 
@@ -27,8 +30,6 @@ public class ContaCorrenteMap : IEntityTypeConfiguration<ContaCorrente>
         builder.Property(x => x.TipoConta)
             .IsRequired()
             .HasMaxLength(20);
-
-        builder.HasCheckConstraint("CK_ContaCorrente_TipoConta", "TipoConta IN ('Corrente','Poupanca')");
 
         builder.Property(x => x.RowVersion)
             .IsRowVersion();

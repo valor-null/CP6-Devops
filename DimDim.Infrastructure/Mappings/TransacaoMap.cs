@@ -8,7 +8,11 @@ public class TransacaoMap : IEntityTypeConfiguration<Transacao>
 {
     public void Configure(EntityTypeBuilder<Transacao> builder)
     {
-        builder.ToTable("Transacao");
+        builder.ToTable("Transacao", t =>
+        {
+            t.HasCheckConstraint("CK_Transacao_Tipo", "Tipo IN ('CREDITO','DEBITO','TRANSFERENCIA')");
+            t.HasCheckConstraint("CK_Transacao_Valor", "Valor > 0");
+        });
 
         builder.HasKey(x => x.IdTransacao);
 
@@ -16,13 +20,9 @@ public class TransacaoMap : IEntityTypeConfiguration<Transacao>
             .IsRequired()
             .HasMaxLength(15);
 
-        builder.HasCheckConstraint("CK_Transacao_Tipo", "Tipo IN ('CREDITO','DEBITO','TRANSFERENCIA')");
-
         builder.Property(x => x.Valor)
             .HasColumnType("decimal(18,2)")
             .IsRequired();
-
-        builder.HasCheckConstraint("CK_Transacao_Valor", "Valor > 0");
 
         builder.Property(x => x.DataHora)
             .HasDefaultValueSql("SYSUTCDATETIME()");

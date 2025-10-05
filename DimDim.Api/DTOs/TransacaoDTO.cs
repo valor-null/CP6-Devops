@@ -8,7 +8,6 @@ public class DepositoSaqueDto
     public int IdConta { get; set; }
 
     [Required]
-    [Range(typeof(decimal), "0.01", "79228162514264337593543950335")]
     public decimal Valor { get; set; }
 }
 
@@ -21,6 +20,5 @@ public class TransferenciaDto
     public int IdContaDestino { get; set; }
 
     [Required]
-    [Range(typeof(decimal), "0.01", "79228162514264337593543950335")]
     public decimal Valor { get; set; }
 }

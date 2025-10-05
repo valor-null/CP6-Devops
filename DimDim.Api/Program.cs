@@ -1,14 +1,28 @@
-using Microsoft.EntityFrameworkCore;
-using DimDim.Infrastructure.Data;
-using DimDim.Core.Interfaces;
-using DimDim.Infrastructure.Repositories;
+using System.Reflection;
+using System.Text.Json.Serialization;
 using DimDim.Api.Extensions;
+using DimDim.Core.Interfaces;
+using DimDim.Infrastructure.Data;
+using DimDim.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(o =>
+{
+    o.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    o.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+});
+
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath)) c.IncludeXmlComments(xmlPath, true);
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "DimDim API", Version = "v1" });
+});
 
 builder.Services.AddCors(options =>
 {

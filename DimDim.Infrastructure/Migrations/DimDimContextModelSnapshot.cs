@@ -17,7 +17,7 @@ namespace DimDim.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.9")
+                .HasAnnotation("ProductVersion", "8.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -32,25 +32,32 @@ namespace DimDim.Infrastructure.Migrations
 
                     b.Property<string>("CPF")
                         .IsRequired()
-                        .HasMaxLength(11)
-                        .HasColumnType("nvarchar(11)");
+                        .HasColumnType("char(11)");
 
                     b.Property<DateTime>("DataCadastro")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDATE()");
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
 
                     b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
                     b.HasKey("IdCliente");
+
+                    b.HasIndex("CPF")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_Cliente_CPF");
+
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_Cliente_Email");
 
                     b.ToTable("Cliente", (string)null);
                 });
@@ -71,6 +78,11 @@ namespace DimDim.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
                     b.Property<decimal>("Saldo")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("decimal(18,2)")
@@ -78,16 +90,22 @@ namespace DimDim.Infrastructure.Migrations
 
                     b.Property<string>("TipoConta")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasDefaultValue("Corrente");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.HasKey("IdConta");
 
-                    b.HasIndex("IdCliente");
+                    b.HasIndex("IdCliente")
+                        .HasDatabaseName("IX_Conta_IdCliente");
 
-                    b.ToTable("ContaCorrente", (string)null);
+                    b.HasIndex("NumeroConta")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_ContaCorrente_NumeroConta");
+
+                    b.ToTable("ContaCorrente", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ContaCorrente_TipoConta", "TipoConta IN ('Corrente','Poupanca')");
+                        });
                 });
 
             modelBuilder.Entity("DimDim.Core.Entities.Transacao", b =>
@@ -101,24 +119,31 @@ namespace DimDim.Infrastructure.Migrations
                     b.Property<DateTime>("DataHora")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDATE()");
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
 
                     b.Property<int>("IdConta")
                         .HasColumnType("int");
 
                     b.Property<string>("Tipo")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
 
                     b.Property<decimal>("Valor")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("IdTransacao");
 
-                    b.HasIndex("IdConta");
+                    b.HasIndex("IdConta", "DataHora")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("IX_Transacao_IdConta_DataHora");
 
-                    b.ToTable("Transacao", (string)null);
+                    b.ToTable("Transacao", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Transacao_Tipo", "Tipo IN ('CREDITO','DEBITO','TRANSFERENCIA')");
+
+                            t.HasCheckConstraint("CK_Transacao_Valor", "Valor > 0");
+                        });
                 });
 
             modelBuilder.Entity("DimDim.Core.Entities.ContaCorrente", b =>
@@ -126,7 +151,7 @@ namespace DimDim.Infrastructure.Migrations
                     b.HasOne("DimDim.Core.Entities.Cliente", "Cliente")
                         .WithMany("Contas")
                         .HasForeignKey("IdCliente")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Cliente");
@@ -137,7 +162,7 @@ namespace DimDim.Infrastructure.Migrations
                     b.HasOne("DimDim.Core.Entities.ContaCorrente", "Conta")
                         .WithMany("Transacoes")
                         .HasForeignKey("IdConta")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Conta");

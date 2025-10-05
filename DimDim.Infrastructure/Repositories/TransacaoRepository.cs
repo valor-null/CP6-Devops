@@ -2,6 +2,7 @@
 using DimDim.Core.Interfaces;
 using DimDim.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace DimDim.Infrastructure.Repositories;
 
@@ -17,74 +18,79 @@ public class TransacaoRepository : ITransacaoRepository
     public async Task<Transacao> DepositarAsync(int idConta, decimal valor, CancellationToken ct = default)
     {
         if (valor <= 0) throw new ArgumentException("Valor deve ser maior que zero.");
-        var conta = await _ctx.Contas.FirstOrDefaultAsync(c => c.IdConta == idConta, ct);
-        if (conta == null) throw new InvalidOperationException("Conta não encontrada.");
-        await using var trx = await _ctx.Database.BeginTransactionAsync(ct);
-        try
+
+        IExecutionStrategy strategy = _ctx.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
+            await using var trx = await _ctx.Database.BeginTransactionAsync(ct);
+
+            var conta = await _ctx.Contas.FirstOrDefaultAsync(c => c.IdConta == idConta, ct);
+            if (conta == null) throw new InvalidOperationException("Conta não encontrada.");
+
             conta.Saldo += valor;
+
             var transacao = new Transacao { IdConta = idConta, Tipo = "CREDITO", Valor = valor };
             _ctx.Transacoes.Add(transacao);
+
             await _ctx.SaveChangesAsync(ct);
             await trx.CommitAsync(ct);
             return transacao;
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            await trx.RollbackAsync(ct);
-            throw new InvalidOperationException("Conflito de concorrência ao atualizar saldo.");
-        }
+        });
     }
 
     public async Task<Transacao> SacarAsync(int idConta, decimal valor, CancellationToken ct = default)
     {
         if (valor <= 0) throw new ArgumentException("Valor deve ser maior que zero.");
-        var conta = await _ctx.Contas.FirstOrDefaultAsync(c => c.IdConta == idConta, ct);
-        if (conta == null) throw new InvalidOperationException("Conta não encontrada.");
-        if (conta.Saldo < valor) throw new InvalidOperationException("Saldo insuficiente.");
-        await using var trx = await _ctx.Database.BeginTransactionAsync(ct);
-        try
+
+        IExecutionStrategy strategy = _ctx.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
+            await using var trx = await _ctx.Database.BeginTransactionAsync(ct);
+
+            var conta = await _ctx.Contas.FirstOrDefaultAsync(c => c.IdConta == idConta, ct);
+            if (conta == null) throw new InvalidOperationException("Conta não encontrada.");
+            if (conta.Saldo < valor) throw new InvalidOperationException("Saldo insuficiente.");
+
             conta.Saldo -= valor;
+
             var transacao = new Transacao { IdConta = idConta, Tipo = "DEBITO", Valor = valor };
             _ctx.Transacoes.Add(transacao);
+
             await _ctx.SaveChangesAsync(ct);
             await trx.CommitAsync(ct);
             return transacao;
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            await trx.RollbackAsync(ct);
-            throw new InvalidOperationException("Conflito de concorrência ao atualizar saldo.");
-        }
+        });
     }
 
     public async Task<(Transacao Debito, Transacao Credito)> TransferirAsync(int idContaOrigem, int idContaDestino, decimal valor, CancellationToken ct = default)
     {
         if (valor <= 0) throw new ArgumentException("Valor deve ser maior que zero.");
         if (idContaOrigem == idContaDestino) throw new ArgumentException("Contas de origem e destino devem ser diferentes.");
-        var origem = await _ctx.Contas.FirstOrDefaultAsync(c => c.IdConta == idContaOrigem, ct);
-        var destino = await _ctx.Contas.FirstOrDefaultAsync(c => c.IdConta == idContaDestino, ct);
-        if (origem == null) throw new InvalidOperationException("Conta de origem não encontrada.");
-        if (destino == null) throw new InvalidOperationException("Conta de destino não encontrada.");
-        if (origem.Saldo < valor) throw new InvalidOperationException("Saldo insuficiente na conta de origem.");
-        await using var trx = await _ctx.Database.BeginTransactionAsync(ct);
-        try
+
+        IExecutionStrategy strategy = _ctx.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync<(Transacao, Transacao)>(async () =>
         {
+            await using var trx = await _ctx.Database.BeginTransactionAsync(ct);
+
+            var origem = await _ctx.Contas.FirstOrDefaultAsync(c => c.IdConta == idContaOrigem, ct);
+            var destino = await _ctx.Contas.FirstOrDefaultAsync(c => c.IdConta == idContaDestino, ct);
+
+            if (origem == null) throw new InvalidOperationException("Conta de origem não encontrada.");
+            if (destino == null) throw new InvalidOperationException("Conta de destino não encontrada.");
+            if (origem.Saldo < valor) throw new InvalidOperationException("Saldo insuficiente na conta de origem.");
+
             origem.Saldo -= valor;
             destino.Saldo += valor;
+
             var debito = new Transacao { IdConta = idContaOrigem, Tipo = "DEBITO", Valor = valor };
             var credito = new Transacao { IdConta = idContaDestino, Tipo = "CREDITO", Valor = valor };
+
             _ctx.Transacoes.AddRange(debito, credito);
+
             await _ctx.SaveChangesAsync(ct);
             await trx.CommitAsync(ct);
             return (debito, credito);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            await trx.RollbackAsync(ct);
-            throw new InvalidOperationException("Conflito de concorrência ao atualizar saldo.");
-        }
+        });
     }
 
     public async Task<IReadOnlyList<Transacao>> ListarPorContaAsync(int idConta, int take, int skip = 0, CancellationToken ct = default)
