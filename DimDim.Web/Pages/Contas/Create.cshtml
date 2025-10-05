@@ -1,0 +1,47 @@
+﻿@page
+@model DimDim.Web.Pages.Contas.CreateModel
+@{
+    ViewData["Title"] = "Nova Conta";
+}
+<section class="title">Nova Conta</section>
+<section class="card">
+    <form method="post" style="display:flex;flex-direction:column;gap:16px;">
+        <div asp-validation-summary="ModelOnly" class="td" style="color:#b91c1c;"></div>
+
+        <div class="row" style="display:flex;gap:16px;align-items:center;padding:10px 12px;">
+            <label for="IdCliente" style="width:140px;">Cliente</label>
+            <select id="IdCliente" asp-for="Form.IdCliente" style="flex:1;padding:10px 12px;border-radius:12px;border:2px solid var(--accent);background:#fff;">
+                <option value="">Selecione...</option>
+                @foreach (var c in Model.Clientes)
+                {
+                    <option value="@c.IdCliente">@c.IdCliente - @c.Nome</option>
+                }
+            </select>
+            <span asp-validation-for="Form.IdCliente" style="color:#b91c1c;"></span>
+        </div>
+
+        <div class="row" style="display:flex;gap:16px;align-items:center;padding:10px 12px;">
+            <label for="NumeroConta" style="width:140px;">Número da Conta</label>
+            <input id="NumeroConta" asp-for="Form.NumeroConta" style="flex:1;padding:10px 12px;border-radius:12px;border:2px solid var(--accent);background:#fff;" />
+            <span asp-validation-for="Form.NumeroConta" style="color:#b91c1c;"></span>
+        </div>
+
+        <div class="row" style="display:flex;gap:16px;align-items:center;padding:10px 12px;">
+            <label for="TipoConta" style="width:140px;">Tipo</label>
+            <select id="TipoConta" asp-for="Form.TipoConta" style="flex:1;padding:10px 12px;border-radius:12px;border:2px solid var(--accent);background:#fff;">
+                <option value="Corrente">Corrente</option>
+                <option value="Poupanca">Poupanca</option>
+            </select>
+            <span asp-validation-for="Form.TipoConta" style="color:#b91c1c;"></span>
+        </div>
+
+        <div style="display:flex;gap:12px;justify-content:flex-end;">
+            <a asp-page="/Contas/Index" style="padding:10px 16px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;text-decoration:none;color:#111;">Cancelar</a>
+            <button type="submit" style="padding:10px 16px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;cursor:pointer;">Salvar</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

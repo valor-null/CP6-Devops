@@ -1,0 +1,38 @@
+﻿@page "{idContaOrigem?}/{idContaDestino?}"
+@model DimDim.Web.Pages.Transacoes.TransferirModel
+@{
+    ViewData["Title"] = "Transferência";
+}
+<section class="title">Transferência entre Contas</section>
+<section class="card">
+    <form method="post" style="display:flex;flex-direction:column;gap:16px;">
+        <div asp-validation-summary="ModelOnly" class="td" style="color:#b91c1c;"></div>
+
+        <div class="row" style="display:flex;gap:16px;align-items:center;padding:10px 12px;">
+            <label for="IdContaOrigem" style="width:180px;">ID Conta Origem</label>
+            <input id="IdContaOrigem" asp-for="Form.IdContaOrigem" type="number" min="1" style="flex:1;padding:10px 12px;border-radius:12px;border:2px solid var(--accent);background:#fff;" />
+            <span asp-validation-for="Form.IdContaOrigem" style="color:#b91c1c;"></span>
+        </div>
+
+        <div class="row" style="display:flex;gap:16px;align-items:center;padding:10px 12px;">
+            <label for="IdContaDestino" style="width:180px;">ID Conta Destino</label>
+            <input id="IdContaDestino" asp-for="Form.IdContaDestino" type="number" min="1" style="flex:1;padding:10px 12px;border-radius:12px;border:2px solid var(--accent);background:#fff;" />
+            <span asp-validation-for="Form.IdContaDestino" style="color:#b91c1c;"></span>
+        </div>
+
+        <div class="row" style="display:flex;gap:16px;align-items:center;padding:10px 12px;">
+            <label for="Valor" style="width:180px;">Valor</label>
+            <input id="Valor" asp-for="Form.Valor" type="number" step="0.01" min="0.01" style="flex:1;padding:10px 12px;border-radius:12px;border:2px solid var(--accent);background:#fff;" />
+            <span asp-validation-for="Form.Valor" style="color:#b91c1c;"></span>
+        </div>
+
+        <div style="display:flex;gap:12px;justify-content:flex-end;">
+            <a asp-page="/Transacoes/Index" asp-route-idConta="@Model.Form.IdContaOrigem" style="padding:10px 16px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;text-decoration:none;color:#111;">Voltar ao Extrato</a>
+            <button type="submit" style="padding:10px 16px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;cursor:pointer;">Transferir</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

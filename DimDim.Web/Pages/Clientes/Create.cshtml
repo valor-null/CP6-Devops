@@ -1,0 +1,38 @@
+﻿@page
+@model DimDim.Web.Pages.Clientes.CreateModel
+@{
+    ViewData["Title"] = "Novo Cliente";
+}
+<section class="title">Novo Cliente</section>
+<section class="card">
+    <form method="post" style="display:flex;flex-direction:column;gap:16px;">
+        <div asp-validation-summary="ModelOnly" class="td" style="color:#b91c1c;"></div>
+
+        <div class="row" style="display:flex;gap:16px;align-items:center;padding:10px 12px;">
+            <label for="Nome" style="width:120px;">Nome</label>
+            <input id="Nome" asp-for="Form.Nome" style="flex:1;padding:10px 12px;border-radius:12px;border:2px solid var(--accent);background:#fff;" />
+            <span asp-validation-for="Form.Nome" style="color:#b91c1c;"></span>
+        </div>
+
+        <div class="row" style="display:flex;gap:16px;align-items:center;padding:10px 12px;">
+            <label for="CPF" style="width:120px;">CPF</label>
+            <input id="CPF" asp-for="Form.CPF" style="flex:1;padding:10px 12px;border-radius:12px;border:2px solid var(--accent);background:#fff;" />
+            <span asp-validation-for="Form.CPF" style="color:#b91c1c;"></span>
+        </div>
+
+        <div class="row" style="display:flex;gap:16px;align-items:center;padding:10px 12px;">
+            <label for="Email" style="width:120px;">Email</label>
+            <input id="Email" asp-for="Form.Email" style="flex:1;padding:10px 12px;border-radius:12px;border:2px solid var(--accent);background:#fff;" />
+            <span asp-validation-for="Form.Email" style="color:#b91c1c;"></span>
+        </div>
+
+        <div style="display:flex;gap:12px;justify-content:flex-end;">
+            <a asp-page="/Clientes/Index" style="padding:10px 16px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;text-decoration:none;color:#111;">Cancelar</a>
+            <button type="submit" style="padding:10px 16px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;cursor:pointer;">Salvar</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

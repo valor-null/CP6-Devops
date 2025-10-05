@@ -1,0 +1,43 @@
+﻿@page
+@model DimDim.Web.Pages.Clientes.IndexModel
+@{
+    ViewData["Title"] = "Clientes";
+}
+<section class="title">Lista de Clientes</section>
+<section class="card">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+        <a asp-page="/Clientes/Create" style="padding:10px 16px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;text-decoration:none;color:#111;">Novo Cliente</a>
+    </div>
+    <table class="table">
+        <thead>
+        <tr>
+            <th class="th">Nome</th>
+            <th class="th">CPF</th>
+            <th class="th">Email</th>
+            <th class="th">Cadastrado em</th>
+        </tr>
+        </thead>
+        <tbody>
+        @if (Model.Clientes != null && Model.Clientes.Count > 0)
+        {
+            foreach (var c in Model.Clientes)
+            {
+                <tr class="tr">
+                    <td class="td">@c.Nome</td>
+                    <td class="td">@c.CPF</td>
+                    <td class="td">@c.Email</td>
+                    <td class="td">@c.DataCadastro.ToString("dd/MM/yyyy HH:mm")</td>
+                </tr>
+            }
+        }
+        else
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                <tr><td class="td" colspan="4"><div class="skeleton"></div></td></tr>
+            }
+            <tr><td class="td" colspan="4">Sem clientes cadastrados ainda.</td></tr>
+        }
+        </tbody>
+    </table>
+</section>

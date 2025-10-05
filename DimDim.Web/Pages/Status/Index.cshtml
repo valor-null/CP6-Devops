@@ -1,0 +1,33 @@
+﻿@page
+@model DimDim.Web.Pages.Status.IndexModel
+@{
+    ViewData["Title"] = "Status";
+}
+<section class="title">Status do Sistema</section>
+<section class="card" style="display:flex;flex-direction:column;gap:16px;">
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:260px;border:2px solid var(--accent);border-radius:16px;padding:16px;background:#fff;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <strong>API</strong>
+                <span style="padding:6px 10px;border-radius:999px;border:1px solid #111;background:#fafafa;font-weight:700;text-transform:uppercase;">
+                    @Model.ApiStatus
+                </span>
+            </div>
+        </div>
+        <div style="flex:1;min-width:260px;border:2px solid var(--accent);border-radius:16px;padding:16px;background:#fff;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <strong>Banco de Dados</strong>
+                <span style="padding:6px 10px;border-radius:999px;border:1px solid #111;background:#fafafa;font-weight:700;text-transform:uppercase;">
+                    @Model.DbStatus
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+        <div style="opacity:.8;">Atualizado em: @(Model.Time?.ToString("dd/MM/yyyy HH:mm:ss") ?? "—")</div>
+        <form method="get">
+            <button type="submit" style="padding:10px 16px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;cursor:pointer;">Recarregar</button>
+        </form>
+    </div>
+</section>
