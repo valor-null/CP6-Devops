@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using DimDim.Infrastructure.Data;
+﻿using DimDim.Api.DTOs;
 using DimDim.Core.Entities;
+using DimDim.Core.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DimDim.Api.Controllers;
 
@@ -9,51 +9,78 @@ namespace DimDim.Api.Controllers;
 [Route("api/[controller]")]
 public class ContasController : ControllerBase
 {
-    private readonly DimDimContext _context;
+    private readonly IContaCorrenteRepository _contas;
+    private readonly IClienteRepository _clientes;
 
-    public ContasController(DimDimContext context)
+    public ContasController(IContaCorrenteRepository contas, IClienteRepository clientes)
     {
-        _context = context;
+        _contas = contas;
+        _clientes = clientes;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ContaCorrente>>> GetAll()
+    public async Task<ActionResult<IEnumerable<ContaCorrente>>> GetAll(CancellationToken ct)
     {
-        return await _context.ContasCorrente.Include(c => c.Cliente).ToListAsync();
+        var data = await _contas.GetAllAsync(ct);
+        return Ok(data);
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<ContaCorrente>> GetById(int id)
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<ContaCorrente>> GetById(int id, CancellationToken ct)
     {
-        var conta = await _context.ContasCorrente.Include(c => c.Cliente).FirstOrDefaultAsync(c => c.IdConta == id);
+        var conta = await _contas.GetByIdAsync(id, ct);
         if (conta == null) return NotFound();
-        return conta;
+        return Ok(conta);
     }
 
     [HttpPost]
-    public async Task<ActionResult<ContaCorrente>> Create(ContaCorrente conta)
+    public async Task<ActionResult<ContaCorrente>> Create(ContaCreateDto dto, CancellationToken ct)
     {
-        _context.ContasCorrente.Add(conta);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetById), new { id = conta.IdConta }, conta);
+        if (!string.Equals(dto.TipoConta, "Corrente", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(dto.TipoConta, "Poupanca", StringComparison.OrdinalIgnoreCase))
+            return BadRequest("TipoConta deve ser 'Corrente' ou 'Poupanca'.");
+
+        var cliente = await _clientes.GetByIdAsync(dto.IdCliente, ct);
+        if (cliente == null) return NotFound("Cliente não encontrado.");
+
+        if (await _contas.ExistsNumeroAsync(dto.NumeroConta, null, ct))
+            return Conflict("NumeroConta já cadastrado.");
+
+        var entity = new ContaCorrente
+        {
+            IdCliente = dto.IdCliente,
+            NumeroConta = dto.NumeroConta,
+            TipoConta = char.ToUpper(dto.TipoConta[0]) + dto.TipoConta[1..].ToLower()
+        };
+
+        var created = await _contas.CreateAsync(entity, ct);
+        return CreatedAtAction(nameof(GetById), new { id = created.IdConta }, created);
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, ContaCorrente conta)
+    [HttpPut("{id:int}/tipo")]
+    public async Task<IActionResult> AlterarTipo(int id, ContaAlterarTipoDto dto, CancellationToken ct)
     {
-        if (id != conta.IdConta) return BadRequest();
-        _context.Entry(conta).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
+        if (!string.Equals(dto.TipoConta, "Corrente", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(dto.TipoConta, "Poupanca", StringComparison.OrdinalIgnoreCase))
+            return BadRequest("TipoConta deve ser 'Corrente' ou 'Poupanca'.");
+
+        var conta = await _contas.GetByIdAsync(id, ct);
+        if (conta == null) return NotFound();
+
+        await _contas.UpdateTipoAsync(id, dto.TipoConta, ct);
         return NoContent();
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
-        var conta = await _context.ContasCorrente.FindAsync(id);
+        var conta = await _contas.GetByIdAsync(id, ct);
         if (conta == null) return NotFound();
-        _context.ContasCorrente.Remove(conta);
-        await _context.SaveChangesAsync();
+
+        if (await _contas.HasTransacoesAsync(id, ct))
+            return Conflict("Conta possui transações e não pode ser excluída.");
+
+        await _contas.DeleteAsync(id, ct);
         return NoContent();
     }
 }

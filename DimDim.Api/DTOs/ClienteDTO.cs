@@ -1,10 +1,31 @@
-﻿namespace DimDim.Api.DTOs;
+﻿using System.ComponentModel.DataAnnotations;
 
-public class ClienteDto
+namespace DimDim.Api.DTOs;
+
+public class ClienteCreateDto
 {
-    public int IdCliente { get; set; }
-    public string Nome { get; set; } = string.Empty;
-    public string CPF { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public DateTime DataCadastro { get; set; }
+    [Required]
+    [StringLength(150)]
+    public string Nome { get; set; } = null!;
+
+    [Required]
+    [RegularExpression(@"^\d{11}$")]
+    public string CPF { get; set; } = null!;
+
+    [Required]
+    [EmailAddress]
+    [StringLength(255)]
+    public string Email { get; set; } = null!;
+}
+
+public class ClienteUpdateDto
+{
+    [Required]
+    [StringLength(150)]
+    public string Nome { get; set; } = null!;
+
+    [Required]
+    [EmailAddress]
+    [StringLength(255)]
+    public string Email { get; set; } = null!;
 }

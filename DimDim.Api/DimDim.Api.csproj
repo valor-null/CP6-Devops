@@ -19,6 +19,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\DimDim.Infrastructure\DimDim.Infrastructure.csproj" />
+      <ProjectReference Include="..\DimDim.Core\DimDim.Core.csproj" />
     </ItemGroup>
 
 </Project>

@@ -1,6 +1,89 @@
-@DimDim.Api_HostAddress = http://localhost:5232
+@host = http://localhost:5232
 
-GET {{DimDim.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Criar cliente
+POST {{host}}/api/clientes
+Content-Type: application/json
 
-###
+{
+  "nome": "Ana Souza",
+  "cpf": "12345678901",
+  "email": "ana.souza@example.com"
+}
+
+### Listar clientes
+GET {{host}}/api/clientes
+
+### Buscar cliente por id
+GET {{host}}/api/clientes/1
+
+### Atualizar cliente
+PUT {{host}}/api/clientes/1
+Content-Type: application/json
+
+{
+  "nome": "Ana L. Souza",
+  "email": "ana.l.souza@example.com"
+}
+
+### Excluir cliente
+DELETE {{host}}/api/clientes/1
+
+
+### Criar conta
+POST {{host}}/api/contas
+Content-Type: application/json
+
+{
+  "idCliente": 2,
+  "numeroConta": "000123-4",
+  "tipoConta": "Corrente"
+}
+
+### Listar contas
+GET {{host}}/api/contas
+
+### Buscar conta por id
+GET {{host}}/api/contas/1
+
+### Alterar tipo da conta
+PUT {{host}}/api/contas/1/tipo
+Content-Type: application/json
+
+{
+  "tipoConta": "Poupanca"
+}
+
+### Excluir conta
+DELETE {{host}}/api/contas/1
+
+
+### Depositar
+POST {{host}}/api/transacoes/deposito
+Content-Type: application/json
+
+{
+  "idConta": 2,
+  "valor": 150.00
+}
+
+### Sacar
+POST {{host}}/api/transacoes/saque
+Content-Type: application/json
+
+{
+  "idConta": 2,
+  "valor": 50.00
+}
+
+### Transferir
+POST {{host}}/api/transacoes/transferencia
+Content-Type: application/json
+
+{
+  "idContaOrigem": 2,
+  "idContaDestino": 3,
+  "valor": 25.00
+}
+
+### Extrato por conta
+GET {{host}}/api/transacoes/conta/2?take=50&skip=0

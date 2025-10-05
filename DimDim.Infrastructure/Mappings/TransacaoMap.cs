@@ -2,29 +2,38 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace DimDim.Infrastructure.Mappings
+namespace DimDim.Infrastructure.Mappings;
+
+public class TransacaoMap : IEntityTypeConfiguration<Transacao>
 {
-    public class TransacaoMap : IEntityTypeConfiguration<Transacao>
+    public void Configure(EntityTypeBuilder<Transacao> builder)
     {
-        public void Configure(EntityTypeBuilder<Transacao> builder)
-        {
-            builder.ToTable("Transacao");
-            builder.HasKey(t => t.IdTransacao);
+        builder.ToTable("Transacao");
 
-            builder.Property(t => t.Tipo)
-                .IsRequired()
-                .HasMaxLength(20);
+        builder.HasKey(x => x.IdTransacao);
 
-            builder.Property(t => t.Valor)
-                .HasColumnType("decimal(18,2)")
-                .IsRequired();
+        builder.Property(x => x.Tipo)
+            .IsRequired()
+            .HasMaxLength(15);
 
-            builder.Property(t => t.DataHora)
-                .HasDefaultValueSql("GETDATE()");
+        builder.HasCheckConstraint("CK_Transacao_Tipo", "Tipo IN ('CREDITO','DEBITO','TRANSFERENCIA')");
 
-            builder.HasOne(t => t.Conta)
-                .WithMany(c => c.Transacoes)
-                .HasForeignKey(t => t.IdConta);
-        }
+        builder.Property(x => x.Valor)
+            .HasColumnType("decimal(18,2)")
+            .IsRequired();
+
+        builder.HasCheckConstraint("CK_Transacao_Valor", "Valor > 0");
+
+        builder.Property(x => x.DataHora)
+            .HasDefaultValueSql("SYSUTCDATETIME()");
+
+        builder.HasIndex(x => new { x.IdConta, x.DataHora })
+            .IsDescending(false, true)
+            .HasDatabaseName("IX_Transacao_IdConta_DataHora");
+
+        builder.HasOne(x => x.Conta)
+            .WithMany(x => x.Transacoes)
+            .HasForeignKey(x => x.IdConta)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

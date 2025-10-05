@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using DimDim.Infrastructure.Data;
+﻿using DimDim.Api.DTOs;
 using DimDim.Core.Entities;
+using DimDim.Core.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DimDim.Api.Controllers;
 
@@ -9,51 +9,72 @@ namespace DimDim.Api.Controllers;
 [Route("api/[controller]")]
 public class ClientesController : ControllerBase
 {
-    private readonly DimDimContext _context;
+    private readonly IClienteRepository _repo;
 
-    public ClientesController(DimDimContext context)
+    public ClientesController(IClienteRepository repo)
     {
-        _context = context;
+        _repo = repo;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Cliente>>> GetAll()
+    public async Task<ActionResult<IEnumerable<Cliente>>> GetAll(CancellationToken ct)
     {
-        return await _context.Clientes.ToListAsync();
+        var data = await _repo.GetAllAsync(ct);
+        return Ok(data);
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<Cliente>> GetById(int id)
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<Cliente>> GetById(int id, CancellationToken ct)
     {
-        var cliente = await _context.Clientes.FindAsync(id);
+        var cliente = await _repo.GetByIdAsync(id, ct);
         if (cliente == null) return NotFound();
-        return cliente;
+        return Ok(cliente);
     }
 
     [HttpPost]
-    public async Task<ActionResult<Cliente>> Create(Cliente cliente)
+    public async Task<ActionResult<Cliente>> Create(ClienteCreateDto dto, CancellationToken ct)
     {
-        _context.Clientes.Add(cliente);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetById), new { id = cliente.IdCliente }, cliente);
+        if (await _repo.ExistsCpfAsync(dto.CPF, null, ct)) return Conflict("CPF já cadastrado.");
+        if (await _repo.ExistsEmailAsync(dto.Email, null, ct)) return Conflict("Email já cadastrado.");
+
+        var entity = new Cliente
+        {
+            Nome = dto.Nome,
+            CPF = dto.CPF,
+            Email = dto.Email
+        };
+
+        var created = await _repo.CreateAsync(entity, ct);
+        return CreatedAtAction(nameof(GetById), new { id = created.IdCliente }, created);
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, Cliente cliente)
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, ClienteUpdateDto dto, CancellationToken ct)
     {
-        if (id != cliente.IdCliente) return BadRequest();
-        _context.Entry(cliente).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
+        var entity = await _repo.GetByIdAsync(id, ct);
+        if (entity == null) return NotFound();
+
+        if (!string.Equals(entity.Email, dto.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            if (await _repo.ExistsEmailAsync(dto.Email, id, ct)) return Conflict("Email já cadastrado.");
+        }
+
+        entity.Nome = dto.Nome;
+        entity.Email = dto.Email;
+
+        await _repo.UpdateAsync(entity, ct);
         return NoContent();
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
-        var cliente = await _context.Clientes.FindAsync(id);
-        if (cliente == null) return NotFound();
-        _context.Clientes.Remove(cliente);
-        await _context.SaveChangesAsync();
+        var exists = await _repo.GetByIdAsync(id, ct);
+        if (exists == null) return NotFound();
+
+        if (await _repo.HasContasAsync(id, ct)) return Conflict("Cliente possui contas vinculadas.");
+
+        await _repo.DeleteAsync(id, ct);
         return NoContent();
     }
 }

@@ -1,30 +1,35 @@
-using DimDim.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization;
+using DimDim.Infrastructure.Data;
+using DimDim.Core.Interfaces;
+using DimDim.Infrastructure.Repositories;
+using DimDim.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers()
-    .AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
-
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.EnableAnnotations();
-});
-
-builder.Services.AddDbContext<DimDimContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddSwaggerGen();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+        policy.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod());
 });
 
-var app = builder.Build();
+builder.Services.AddDbContext<DimDimContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sql => sql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), null)));
 
-app.UseCors("AllowAll");
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddScoped<IContaCorrenteRepository, ContaCorrenteRepository>();
+builder.Services.AddScoped<ITransacaoRepository, TransacaoRepository>();
+
+builder.Services.AddGlobalProblemDetails();
+
+var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
@@ -32,7 +37,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-app.UseAuthorization();
+app.UseCors("AllowAll");
+
+app.UseGlobalExceptionHandling();
+
+app.UseAutoMigrations();
+
 app.MapControllers();
+
 app.Run();

@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using DimDim.Infrastructure.Data;
+﻿using DimDim.Api.DTOs;
 using DimDim.Core.Entities;
+using DimDim.Core.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DimDim.Api.Controllers;
 
@@ -9,51 +9,79 @@ namespace DimDim.Api.Controllers;
 [Route("api/[controller]")]
 public class TransacoesController : ControllerBase
 {
-    private readonly DimDimContext _context;
+    private readonly ITransacaoRepository _repo;
 
-    public TransacoesController(DimDimContext context)
+    public TransacoesController(ITransacaoRepository repo)
     {
-        _context = context;
+        _repo = repo;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<Transacao>>> GetAll()
+    [HttpPost("deposito")]
+    public async Task<ActionResult<Transacao>> Depositar(DepositoSaqueDto dto, CancellationToken ct)
     {
-        return await _context.Transacoes.Include(t => t.Conta).ToListAsync();
+        try
+        {
+            var result = await _repo.DepositarAsync(dto.IdConta, dto.Valor, ct);
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<Transacao>> GetById(int id)
+    [HttpPost("saque")]
+    public async Task<ActionResult<Transacao>> Sacar(DepositoSaqueDto dto, CancellationToken ct)
     {
-        var transacao = await _context.Transacoes.Include(t => t.Conta).FirstOrDefaultAsync(t => t.IdTransacao == id);
-        if (transacao == null) return NotFound();
-        return transacao;
+        try
+        {
+            var result = await _repo.SacarAsync(dto.IdConta, dto.Valor, ct);
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("Saldo insuficiente", StringComparison.OrdinalIgnoreCase))
+        {
+            return Conflict(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 
-    [HttpPost]
-    public async Task<ActionResult<Transacao>> Create(Transacao transacao)
+    [HttpPost("transferencia")]
+    public async Task<ActionResult<object>> Transferir(TransferenciaDto dto, CancellationToken ct)
     {
-        _context.Transacoes.Add(transacao);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetById), new { id = transacao.IdTransacao }, transacao);
+        try
+        {
+            var (debito, credito) = await _repo.TransferirAsync(dto.IdContaOrigem, dto.IdContaDestino, dto.Valor, ct);
+            return Ok(new { Debito = debito, Credito = credito });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("Saldo insuficiente", StringComparison.OrdinalIgnoreCase))
+        {
+            return Conflict(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, Transacao transacao)
+    [HttpGet("conta/{idConta:int}")]
+    public async Task<ActionResult<IEnumerable<Transacao>>> Extrato(int idConta, int take = 50, int skip = 0, CancellationToken ct = default)
     {
-        if (id != transacao.IdTransacao) return BadRequest();
-        _context.Entry(transacao).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
-        return NoContent();
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var transacao = await _context.Transacoes.FindAsync(id);
-        if (transacao == null) return NotFound();
-        _context.Transacoes.Remove(transacao);
-        await _context.SaveChangesAsync();
-        return NoContent();
+        var list = await _repo.ListarPorContaAsync(idConta, take, skip, ct);
+        return Ok(list);
     }
 }
