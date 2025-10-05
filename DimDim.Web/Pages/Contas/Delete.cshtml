@@ -1,0 +1,51 @@
+﻿@page "{id:int}"
+@model DimDim.Web.Pages.Contas.DeleteModel
+@{
+    ViewData["Title"] = "Excluir Conta";
+}
+<section class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 m-0">Excluir Conta</h1>
+    <a asp-page="/Contas/Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+</section>
+
+@if (Model.Conta is null)
+{
+    <div class="alert alert-warning">Conta não encontrada.</div>
+}
+else
+{
+    <div class="card p-4 border-2 border-dark rounded-4">
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <div>Tem certeza que deseja excluir esta conta? Esta ação não pode ser desfeita.</div>
+        </div>
+
+        <dl class="row">
+            <dt class="col-sm-3">ID da Conta</dt>
+            <dd class="col-sm-9">@Model.Conta.IdConta</dd>
+
+            <dt class="col-sm-3">Número</dt>
+            <dd class="col-sm-9">@Model.Conta.NumeroConta</dd>
+
+            <dt class="col-sm-3">Tipo</dt>
+            <dd class="col-sm-9">@Model.Conta.TipoConta</dd>
+
+            <dt class="col-sm-3">Saldo</dt>
+            <dd class="col-sm-9">@Model.Conta.Saldo.ToString("N2")</dd>
+
+            <dt class="col-sm-3">Cliente (Id)</dt>
+            <dd class="col-sm-9">@Model.Conta.IdCliente</dd>
+        </dl>
+
+        <form method="post" class="d-flex justify-content-end gap-2">
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="Confirm" value="true" />
+            <a asp-page="/Contas/Index" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg me-1"></i>Cancelar
+            </a>
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-trash3 me-1"></i>Excluir
+            </button>
+        </form>
+    </div>
+}

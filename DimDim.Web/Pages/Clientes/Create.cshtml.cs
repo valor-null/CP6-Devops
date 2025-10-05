@@ -14,6 +14,9 @@ public class CreateModel : PageModel
         _httpFactory = httpFactory;
     }
 
+    [TempData]
+    public string? Success { get; set; }
+
     [BindProperty]
     public ClienteForm Form { get; set; } = new();
 
@@ -31,7 +34,11 @@ public class CreateModel : PageModel
             email = Form.Email
         }, ct);
 
-        if (res.IsSuccessStatusCode) return RedirectToPage("/Clientes/Index");
+        if (res.IsSuccessStatusCode)
+        {
+            Success = "Cliente criado com sucesso.";
+            return RedirectToPage("/Clientes/Index");
+        }
 
         var msg = await res.Content.ReadAsStringAsync(ct);
         ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(msg) ? "Falha ao criar cliente." : msg);

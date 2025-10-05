@@ -1,0 +1,48 @@
+﻿@page "{id:int}"
+@model DimDim.Web.Pages.Clientes.DeleteModel
+@{
+    ViewData["Title"] = "Excluir Cliente";
+}
+<section class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 m-0">Excluir Cliente</h1>
+    <a asp-page="/Clientes/Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+</section>
+
+@if (Model.Cliente is null)
+{
+    <div class="alert alert-warning">Cliente não encontrado.</div>
+}
+else
+{
+    <div class="card p-4 border-2 border-dark rounded-4">
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <div>Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.</div>
+        </div>
+
+        <dl class="row">
+            <dt class="col-sm-3">Nome</dt>
+            <dd class="col-sm-9">@Model.Cliente.Nome</dd>
+
+            <dt class="col-sm-3">CPF</dt>
+            <dd class="col-sm-9">@Model.Cliente.CPF</dd>
+
+            <dt class="col-sm-3">Email</dt>
+            <dd class="col-sm-9">@Model.Cliente.Email</dd>
+
+            <dt class="col-sm-3">Cadastrado em</dt>
+            <dd class="col-sm-9">@Model.Cliente.DataCadastro.ToString("dd/MM/yyyy HH:mm")</dd>
+        </dl>
+
+        <form method="post" class="d-flex justify-content-end gap-2">
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="Confirm" value="true" />
+            <a asp-page="/Clientes/Index" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg me-1"></i>Cancelar
+            </a>
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-trash3 me-1"></i>Excluir
+            </button>
+        </form>
+    </div>
+}

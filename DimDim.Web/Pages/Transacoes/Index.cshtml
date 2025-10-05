@@ -3,62 +3,82 @@
 @{
     ViewData["Title"] = "Transações";
 }
-<section class="title">Extrato de Transações</section>
-<section class="card">
-    <form method="get" style="margin-bottom:12px">
-        <div class="row" style="display:flex;align-items:center;gap:12px;padding:10px 12px;">
-            <label for="IdConta">Conta</label>
-            <input id="IdConta" asp-for="IdConta" type="number" min="1" style="width:120px;padding:8px 10px;border-radius:10px;border:1px solid #ccc;">
-            <label for="Take">Take</label>
-            <input id="Take" asp-for="Take" type="number" min="1" max="200" style="width:90px;padding:8px 10px;border-radius:10px;border:1px solid #ccc;">
-            <label for="Skip">Skip</label>
-            <input id="Skip" asp-for="Skip" type="number" min="0" style="width:90px;padding:8px 10px;border-radius:10px;border:1px solid #ccc;">
-            <button type="submit" style="padding:10px 16px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;cursor:pointer;">Carregar</button>
-        </div>
-    </form>
+<section class="page-header container">
+    <h1>Transações</h1>
+    <div class="d-flex gap-2">
+        <a class="btn btn-dark" asp-page="/Transacoes/Depositar" asp-route-id="@Model.IdConta"><i class="bi bi-arrow-down-circle me-1"></i>Depositar</a>
+        <a class="btn btn-outline-dark" asp-page="/Transacoes/Sacar" asp-route-id="@Model.IdConta"><i class="bi bi-arrow-up-circle me-1"></i>Sacar</a>
+        <a class="btn btn-outline-dark" asp-page="/Transacoes/Transferir" asp-route-id="@Model.IdConta"><i class="bi bi-arrow-left-right me-1"></i>Transferir</a>
+    </div>
+</section>
 
-    <div style="display:flex;gap:12px;justify-content:flex-end;margin-bottom:16px;">
-        <a asp-page="/Transacoes/Depositar" asp-route-idConta="@Model.IdConta" style="padding:10px 16px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;text-decoration:none;color:#111;">Depositar</a>
-        <a asp-page="/Transacoes/Sacar" asp-route-idConta="@Model.IdConta" style="padding:10px 16px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;text-decoration:none;color:#111;">Sacar</a>
-        <a asp-page="/Transacoes/Transferir" asp-route-idContaOrigem="@Model.IdConta" style="padding:10px 16px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;text-decoration:none;color:#111;">Transferir</a>
+<div class="container">
+    <div class="card padded mb-3">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-12 col-md-6 col-lg-4">
+                <label for="idConta" class="form-label">Conta</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-wallet2"></i></span>
+                    <input id="idConta" name="idConta" type="number" class="form-control" value="@(Model.IdConta == 0 ? null : Model.IdConta)" />
+                </div>
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <label for="take" class="form-label">Take</label>
+                <input id="take" name="take" type="number" class="form-control" value="@(Model.Take == 0 ? 50 : Model.Take)" />
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <label for="skip" class="form-label">Skip</label>
+                <input id="skip" name="skip" type="number" class="form-control" value="@Model.Skip" />
+            </div>
+            <div class="col-12 col-lg-4 d-grid d-lg-flex justify-content-lg-end">
+                <button type="submit" class="btn btn-dark"><i class="bi bi-arrow-repeat me-1"></i>Carregar</button>
+            </div>
+        </form>
     </div>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th class="th">Tipo</th>
-                <th class="th">Valor</th>
-                <th class="th">Data/Hora (UTC)</th>
-            </tr>
-        </thead>
-        <tbody>
-        @if (Model.IdConta is null || Model.IdConta <= 0)
-        {
-            for (int i = 0; i < 3; i++)
-            {
-                <tr><td class="td" colspan="3"><div class="skeleton"></div></td></tr>
-            }
-            <tr><td class="td" colspan="3">Informe uma conta e clique em Carregar.</td></tr>
-        }
-        else if (Model.Itens != null && Model.Itens.Count > 0)
-        {
-            foreach (var t in Model.Itens)
-            {
-                <tr class="tr">
-                    <td class="td">@t.Tipo</td>
-                    <td class="td">@t.Valor.ToString("N2")</td>
-                    <td class="td">@t.DataHora.ToString("dd/MM/yyyy HH:mm")</td>
-                </tr>
-            }
-        }
-        else
-        {
-            for (int i = 0; i < 3; i++)
-            {
-                <tr><td class="td" colspan="3"><div class="skeleton"></div></td></tr>
-            }
-            <tr><td class="td" colspan="3">Sem transações para esta conta.</td></tr>
-        }
-        </tbody>
-    </table>
-</section>
+    @if (!string.IsNullOrWhiteSpace(Model.Error))
+    {
+        <div class="alert alert-warning border-2 border-warning container mb-3">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@Model.Error
+        </div>
+    }
+
+    <div class="card padded">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th class="text-end">Valor</th>
+                        <th class="text-end">Data/Hora</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Transacoes != null && Model.Transacoes.Count > 0)
+                {
+                    foreach (var t in Model.Transacoes)
+                    {
+                        <tr>
+                            <td class="align-middle text-capitalize">@t.Tipo</td>
+                            <td class="align-middle text-end">@t.Valor.ToString("N2")</td>
+                            <td class="align-middle text-end">@t.DataHora.ToString("dd/MM/yyyy HH:mm")</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    if (Model.IdConta > 0 && string.IsNullOrWhiteSpace(Model.Error))
+                    {
+                        <tr><td colspan="3" class="text-center py-3">Nenhuma transação encontrada para esta conta.</td></tr>
+                    }
+                    else
+                    {
+                        for (int i = 0; i < 5; i++) { <tr><td colspan="3"><div class="skeleton"></div></td></tr>; }
+                        <tr><td colspan="3" class="text-center py-3">Informe uma conta e clique em <strong>Carregar</strong>.</td></tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

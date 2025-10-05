@@ -1,10 +1,10 @@
-﻿@page
-@model DimDim.Web.Pages.Clientes.CreateModel
+﻿@page "{id:int}"
+@model DimDim.Web.Pages.Clientes.EditModel
 @{
-    ViewData["Title"] = "Novo Cliente";
+    ViewData["Title"] = "Editar Cliente";
 }
 <section class="page-header container">
-    <h1>Novo Cliente</h1>
+    <h1>Editar Cliente</h1>
     <a asp-page="/Clientes/Index" class="btn-ghost"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
 </section>
 
@@ -20,16 +20,15 @@
             <span asp-validation-for="Form.Nome" class="text-danger"></span>
 
             <div class="form-row">
-                <label asp-for="Form.CPF">CPF</label>
-                <input asp-for="Form.CPF" class="font-mono" />
-            </div>
-            <span asp-validation-for="Form.CPF" class="text-danger"></span>
-
-            <div class="form-row">
                 <label asp-for="Form.Email">Email</label>
                 <input asp-for="Form.Email" />
             </div>
             <span asp-validation-for="Form.Email" class="text-danger"></span>
+
+            <div class="form-row">
+                <label asp-for="Form.CPF">CPF</label>
+                <input asp-for="Form.CPF" readonly class="font-mono" />
+            </div>
 
             <div class="form-actions">
                 <a asp-page="/Clientes/Index" class="btn-ghost"><i class="bi bi-x-lg me-1"></i>Cancelar</a>

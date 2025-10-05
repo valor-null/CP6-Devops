@@ -1,0 +1,48 @@
+﻿@page "{id:int}"
+@model DimDim.Web.Pages.Contas.EditModel
+@{
+    ViewData["Title"] = "Editar Conta";
+}
+<section class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 m-0">Editar Conta</h1>
+    <a asp-page="/Contas/Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+</section>
+
+<div class="card p-4 border-2 border-dark rounded-4">
+    <form method="post" class="row g-3">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="col-md-4">
+            <label class="form-label">Número da Conta</label>
+            <input class="form-control" value="@Model.Form.NumeroConta" readonly />
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Cliente (Id)</label>
+            <input class="form-control" value="@Model.Form.IdCliente" readonly />
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Saldo Atual</label>
+            <input class="form-control text-end" value="@Model.Form.Saldo.ToString("N2")" readonly />
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Form.TipoConta" class="form-label">Tipo da Conta</label>
+            <select asp-for="Form.TipoConta" class="form-select">
+                <option value="Corrente">Corrente</option>
+                <option value="Poupanca">Poupanca</option>
+            </select>
+            <span asp-validation-for="Form.TipoConta" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 d-flex justify-content-end gap-2">
+            <a asp-page="/Contas/Index" class="btn btn-outline-secondary"><i class="bi bi-x-lg me-1"></i>Cancelar</a>
+            <button type="submit" class="btn btn-dark"><i class="bi bi-save me-1"></i>Salvar</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="/Pages/Shared/_ValidationScriptsPartial.cshtml" />
+}

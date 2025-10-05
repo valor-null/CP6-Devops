@@ -17,6 +17,9 @@ public class CreateModel : PageModel
         _json = json;
     }
 
+    [TempData]
+    public string? Success { get; set; }
+
     [BindProperty]
     public ContaForm Form { get; set; } = new();
 
@@ -47,7 +50,11 @@ public class CreateModel : PageModel
             tipoConta = Form.TipoConta
         }, ct);
 
-        if (res.IsSuccessStatusCode) return RedirectToPage("/Contas/Index");
+        if (res.IsSuccessStatusCode)
+        {
+            Success = "Conta criada com sucesso.";
+            return RedirectToPage("/Contas/Index");
+        }
 
         var msg = await res.Content.ReadAsStringAsync(ct);
         ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(msg) ? "Falha ao criar conta." : msg);

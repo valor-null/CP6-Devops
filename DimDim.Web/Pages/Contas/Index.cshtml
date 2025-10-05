@@ -3,41 +3,57 @@
 @{
     ViewData["Title"] = "Contas";
 }
-<section class="title">Lista de Contas</section>
-<section class="card">
-    <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
-        <a asp-page="/Contas/Create" style="padding:10px 16px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;text-decoration:none;color:#111;">Nova Conta</a>
-    </div>
-    <table class="table">
-        <thead>
-        <tr>
-            <th class="th">Número</th>
-            <th class="th">Tipo</th>
-            <th class="th">Saldo</th>
-            <th class="th">Cliente</th>
-        </tr>
-        </thead>
-        <tbody>
-        @if (Model.Contas != null && Model.Contas.Count > 0)
-        {
-            foreach (var c in Model.Contas)
-            {
-                <tr class="tr">
-                    <td class="td">@c.NumeroConta</td>
-                    <td class="td">@c.TipoConta</td>
-                    <td class="td">@c.Saldo.ToString("N2")</td>
-                    <td class="td">@c.IdCliente</td>
-                </tr>
-            }
-        }
-        else
-        {
-            for (int i = 0; i < 5; i++)
-            {
-                <tr><td class="td" colspan="4"><div class="skeleton"></div></td></tr>
-            }
-            <tr><td class="td" colspan="4">Sem contas cadastradas ainda.</td></tr>
-        }
-        </tbody>
-    </table>
+<section class="page-header container">
+    <h1>Contas</h1>
+    <a asp-page="/Contas/Create" class="btn btn-dark"><i class="bi bi-plus-lg me-1"></i>Nova Conta</a>
 </section>
+
+<div class="container">
+    <div class="card padded">
+        <div class="table-responsive">
+            <table class="table table-contas">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Tipo</th>
+                        <th class="text-end">Saldo</th>
+                        <th class="text-center">Cliente (Id)</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Contas != null && Model.Contas.Count > 0)
+                {
+                    foreach (var c in Model.Contas)
+                    {
+                        <tr>
+                            <td class="align-middle">@c.NumeroConta</td>
+                            <td class="align-middle">@c.TipoConta</td>
+                            <td class="align-middle text-end">@c.Saldo.ToString("N2")</td>
+                            <td class="align-middle text-center font-mono">@c.IdCliente</td>
+                            <td class="align-middle">
+                                <div class="btn-iconbar">
+                                    <a class="btn-ghost-sm" asp-page="/Contas/Edit" asp-route-id="@c.IdConta" title="Editar">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <a class="btn-ghost-sm" asp-page="/Contas/Delete" asp-route-id="@c.IdConta" title="Excluir">
+                                        <i class="bi bi-trash3"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < 5; i++)
+                    {
+                        <tr><td colspan="5"><div class="skeleton"></div></td></tr>
+                    }
+                    <tr><td colspan="5">Sem contas cadastradas ainda.</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
