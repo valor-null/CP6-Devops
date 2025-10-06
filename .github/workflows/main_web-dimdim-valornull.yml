@@ -1,44 +1,36 @@
-name: 'Build and deploy ASP.NET Core app to Azure Web App: web-dimdim-valornull'
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: 'Build and deploy ASP.Net Core app to Azure Web App: web-dimdim-valornull'
 
 on:
   push:
-    branches: [ main ]
+    branches:
+    - main
   workflow_dispatch:
-
-env:
-  AZURE_WEBAPP_NAME: web-dimdim-valornull
-  PROJECT_PATH: DimDim.Web/DimDim.Web.csproj
-  PUBLISH_DIR: publish
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v2
+    
+    - name: Set up .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '8.x'
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
+    - name: Build with dotnet
+      run: dotnet build --configuration Release
+    
+    - name: dotnet publish
+      run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp 
 
-      - name: Restore
-        run: dotnet restore ${{ env.PROJECT_PATH }}
-
-      - name: Build (Release)
-        run: dotnet build ${{ env.PROJECT_PATH }} --no-restore -c Release
-
-      - name: Publish
-        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -o ${{ github.workspace }}/${{ env.PUBLISH_DIR }}
-
-      - name: List published files (debug)
-        run: ls -la ${{ github.workspace }}/${{ env.PUBLISH_DIR }}
-
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          slot-name: production
-          publish-profile: ${{ secrets.AzureAppService_PublishProfile_e5d418287ba54bbd9992e2256ad3f26e }}
-          package: ${{ github.workspace }}/${{ env.PUBLISH_DIR }}
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with: 
+        app-name: 'web-dimdim-valornull'
+        slot-name: 'production'
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_e5d418287ba54bbd9992e2256ad3f26e }}
+        package: ${{env.DOTNET_ROOT}}/myapp 
