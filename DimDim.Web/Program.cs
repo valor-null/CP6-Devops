@@ -1,56 +1,40 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using DimDim.Infrastructure.Data;
 using DimDim.Core.Interfaces;
 using DimDim.Infrastructure.Repositories;
-using Microsoft.AspNetCore.DataProtection;
-using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorPages();
-builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo("/home/keys"))
-    .SetApplicationName("DimDim");
-
-builder.Services.AddApplicationInsightsTelemetry();
-
-builder.Services.AddSingleton(new JsonSerializerOptions
-{
-    PropertyNameCaseInsensitive = true,
-    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-});
 
 builder.Services.AddDbContext<DimDimContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        sql => sql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), null)));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<IContaCorrenteRepository, ContaCorrenteRepository>();
 builder.Services.AddScoped<ITransacaoRepository, TransacaoRepository>();
 
+var enUS = new CultureInfo("en-US");
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    options.DefaultRequestCulture = new RequestCulture(enUS);
+    options.SupportedCultures = new[] { enUS };
+    options.SupportedUICultures = new[] { enUS };
+});
+
 var app = builder.Build();
 
-var supportedCultures = new[] { new CultureInfo("pt-BR"), new CultureInfo("en-US") };
-app.UseRequestLocalization(new RequestLocalizationOptions
-{
-    DefaultRequestCulture = new RequestCulture("pt-BR"),
-    SupportedCultures = supportedCultures,
-    SupportedUICultures = supportedCultures
-});
+var locOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>();
+app.UseRequestLocalization(locOptions.Value);
+CultureInfo.DefaultThreadCurrentCulture = enUS;
+CultureInfo.DefaultThreadCurrentUICulture = enUS;
 
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    app.UseHsts();
-}
-else
-{
-    app.UseDeveloperExceptionPage();
 }
 
 using (var scope = app.Services.CreateScope())
@@ -60,10 +44,7 @@ using (var scope = app.Services.CreateScope())
         var db = scope.ServiceProvider.GetRequiredService<DimDimContext>();
         db.Database.Migrate();
     }
-    catch (Exception ex)
-    {
-        Console.WriteLine(ex.ToString());
-    }
+    catch { }
 }
 
 app.UseHttpsRedirection();
