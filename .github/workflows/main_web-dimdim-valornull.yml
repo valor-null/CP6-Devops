@@ -9,12 +9,10 @@ env:
   AZURE_WEBAPP_NAME: web-dimdim-valornull
   PROJECT_PATH: DimDim.Web/DimDim.Web.csproj
   PUBLISH_DIR: publish
-  PACKAGE_PATH: app.zip
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,20 +29,23 @@ jobs:
         run: dotnet build ${{ env.PROJECT_PATH }} --no-restore -c Release
 
       - name: Publish
-        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -o ${{ github.workspace }}/${{ env.PUBLISH_DIR }}
+        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -o ${{ env.PUBLISH_DIR }}
 
-      - name: List published files (debug)
-        run: ls -la ${{ github.workspace }}/${{ env.PUBLISH_DIR }}
-
-      - name: Create zip package
+      - name: Verify publish output
         run: |
-          cd ${{ github.workspace }}/${{ env.PUBLISH_DIR }}
-          zip -r ../${{ env.PACKAGE_PATH }} .
+          ls -la ${{ env.PUBLISH_DIR }}
+          test -f "${{ env.PUBLISH_DIR }}/DimDim.Web.dll"
+          test -f "${{ env.PUBLISH_DIR }}/DimDim.Web.runtimeconfig.json"
+
+      - name: Zip package
+        run: |
+          cd ${{ env.PUBLISH_DIR }}
+          zip -r ../app.zip .
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: production
-          publish-profile: ${{ secrets.AzureAppService_PublishProfile_e5d418287ba54bbd9992e2256ad3f26e }}
-          package: ${{ github.workspace }}/${{ env.PACKAGE_PATH }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_E5D418287BA54BBD9992E2256AD3F26E }}
+          package: ${{ github.workspace }}/app.zip
