@@ -9,7 +9,6 @@ env:
   AZURE_WEBAPP_NAME: web-dimdim-valornull
   PROJECT_PATH: DimDim.Web/DimDim.Web.csproj
   PUBLISH_DIR: publish
-  ZIP_NAME: dimdim-web.zip
 
 jobs:
   build-and-deploy:
@@ -31,31 +30,15 @@ jobs:
         run: dotnet build ${{ env.PROJECT_PATH }} --no-restore -c Release
 
       - name: Publish
-        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -o ${{ env.PUBLISH_DIR }}
+        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -o ${{ github.workspace }}/${{ env.PUBLISH_DIR }}
 
-      # Garante que publicou o projeto certo
-      - name: Sanity check publish output
-        run: |
-          ls -la ${{ env.PUBLISH_DIR }}
-          test -f "${{ env.PUBLISH_DIR }}/DimDim.Web.dll"
-          test -f "${{ env.PUBLISH_DIR }}/DimDim.Web.runtimeconfig.json"
-
-      - name: Create deployment package (zip contents)
-        run: |
-          cd ${{ env.PUBLISH_DIR }}
-          zip -r ../${{ env.ZIP_NAME }} .
-          cd ..
-          ls -la ${{ env.ZIP_NAME }}
-
-      - name: Upload artifact (debug)
-        uses: actions/upload-artifact@v4
-        with:
-          name: publish-zip
-          path: ${{ env.ZIP_NAME }}
+      - name: List published files (debug)
+        run: ls -la ${{ github.workspace }}/${{ env.PUBLISH_DIR }}
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_E5D418287BA54BBD9992E2256AD3F26E }}
-          package: ${{ env.ZIP_NAME }}
+          slot-name: production
+          publish-profile: ${{ secrets.AzureAppService_PublishProfile_e5d418287ba54bbd9992e2256ad3f26e }}
+          package: ${{ github.workspace }}/${{ env.PUBLISH_DIR }}
