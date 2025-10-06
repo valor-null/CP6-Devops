@@ -6,10 +6,16 @@ using Microsoft.EntityFrameworkCore;
 using DimDim.Infrastructure.Data;
 using DimDim.Core.Interfaces;
 using DimDim.Infrastructure.Repositories;
+using Microsoft.AspNetCore.DataProtection;
+using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorPages();
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo("/home/keys"))
+    .SetApplicationName("DimDim");
+
 builder.Services.AddApplicationInsightsTelemetry();
 
 builder.Services.AddSingleton(new JsonSerializerOptions
