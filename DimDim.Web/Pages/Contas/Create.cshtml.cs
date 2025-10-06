@@ -1,20 +1,21 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Net.Http.Json;
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using DimDim.Core.Interfaces;
+using DimDim.Core.Entities;
+using System.Linq;
 
 namespace DimDim.Web.Pages.Contas;
 
 public class CreateModel : PageModel
 {
-    private readonly IHttpClientFactory _httpFactory;
-    private readonly JsonSerializerOptions _json;
+    private readonly IContaCorrenteRepository _repoContas;
+    private readonly IClienteRepository _repoClientes;
 
-    public CreateModel(IHttpClientFactory httpFactory, JsonSerializerOptions json)
+    public CreateModel(IContaCorrenteRepository repoContas, IClienteRepository repoClientes)
     {
-        _httpFactory = httpFactory;
-        _json = json;
+        _repoContas = repoContas;
+        _repoClientes = repoClientes;
     }
 
     [TempData]
@@ -27,11 +28,8 @@ public class CreateModel : PageModel
 
     public async Task OnGetAsync(CancellationToken ct)
     {
-        var client = _httpFactory.CreateClient("Api");
-        using var res = await client.GetAsync("/api/clientes", ct);
-        res.EnsureSuccessStatusCode();
-        var list = await res.Content.ReadFromJsonAsync<List<ClienteItem>>(_json, ct);
-        Clientes = list ?? new();
+        var list = await _repoClientes.GetAllAsync(ct);
+        Clientes = list.Select(c => new ClienteItem { IdCliente = c.IdCliente, Nome = c.Nome }).ToList();
     }
 
     public async Task<IActionResult> OnPostAsync(CancellationToken ct)
@@ -42,24 +40,17 @@ public class CreateModel : PageModel
             return Page();
         }
 
-        var client = _httpFactory.CreateClient("Api");
-        var res = await client.PostAsJsonAsync("/api/contas", new
+        var conta = new ContaCorrente
         {
-            idCliente = Form.IdCliente,
-            numeroConta = Form.NumeroConta,
-            tipoConta = Form.TipoConta
-        }, ct);
+            IdCliente = Form.IdCliente,
+            NumeroConta = Form.NumeroConta,
+            TipoConta = Form.TipoConta,
+            Saldo = 0m
+        };
 
-        if (res.IsSuccessStatusCode)
-        {
-            Success = "Conta criada com sucesso.";
-            return RedirectToPage("/Contas/Index");
-        }
-
-        var msg = await res.Content.ReadAsStringAsync(ct);
-        ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(msg) ? "Falha ao criar conta." : msg);
-        await OnGetAsync(ct);
-        return Page();
+        await _repoContas.CreateAsync(conta, ct);
+        Success = "Conta criada com sucesso.";
+        return RedirectToPage("/Contas/Index");
     }
 
     public class ContaForm

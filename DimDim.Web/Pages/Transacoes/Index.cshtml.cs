@@ -1,21 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using DimDim.Core.Interfaces;
 
 namespace DimDim.Web.Pages.Transacoes
 {
     public class IndexModel : PageModel
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ITransacaoRepository _repo;
 
-        public IndexModel(IHttpClientFactory httpClientFactory)
+        public IndexModel(ITransacaoRepository repo)
         {
-            _httpClientFactory = httpClientFactory;
+            _repo = repo;
         }
 
         [BindProperty(SupportsGet = true)]
@@ -39,32 +35,23 @@ namespace DimDim.Web.Pages.Transacoes
                 return Page();
             }
 
-            var http = _httpClientFactory.CreateClient("Api");
-            var url = $"api/Transacoes/conta/{IdConta}?take={Take}&skip={Skip}";
-
-            HttpResponseMessage resp;
             try
             {
-                resp = await http.GetAsync(url);
-            }
-            catch
-            {
-                Error = "Não foi possível conectar à API.";
+                var list = await _repo.ListarPorContaAsync(IdConta, Take, Skip);
+                Transacoes = list.Select(t => new TransacaoVm
+                {
+                    DataHora = t.DataHora,
+                    Tipo = t.Tipo,
+                    Valor = t.Valor
+                }).ToList();
                 return Page();
             }
-
-            if (!resp.IsSuccessStatusCode)
+            catch (Exception ex)
             {
-                var body = await resp.Content.ReadAsStringAsync();
-                Error = $"Erro ao carregar transações ({(int)resp.StatusCode}). {body}";
+                Error = ex.Message;
                 Transacoes = new List<TransacaoVm>();
                 return Page();
             }
-
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var list = await resp.Content.ReadFromJsonAsync<List<TransacaoVm>>(options);
-            Transacoes = list ?? new List<TransacaoVm>();
-            return Page();
         }
 
         public class TransacaoVm

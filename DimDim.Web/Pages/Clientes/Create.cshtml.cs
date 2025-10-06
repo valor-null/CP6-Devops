@@ -1,17 +1,18 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using DimDim.Core.Interfaces;
+using DimDim.Core.Entities;
 
 namespace DimDim.Web.Pages.Clientes;
 
 public class CreateModel : PageModel
 {
-    private readonly IHttpClientFactory _httpFactory;
+    private readonly IClienteRepository _repo;
 
-    public CreateModel(IHttpClientFactory httpFactory)
+    public CreateModel(IClienteRepository repo)
     {
-        _httpFactory = httpFactory;
+        _repo = repo;
     }
 
     [TempData]
@@ -26,23 +27,16 @@ public class CreateModel : PageModel
     {
         if (!ModelState.IsValid) return Page();
 
-        var client = _httpFactory.CreateClient("Api");
-        var res = await client.PostAsJsonAsync("/api/clientes", new
+        var cli = new Cliente
         {
-            nome = Form.Nome,
-            cpf = Form.CPF,
-            email = Form.Email
-        }, ct);
+            Nome = Form.Nome,
+            CPF = Form.CPF,
+            Email = Form.Email
+        };
 
-        if (res.IsSuccessStatusCode)
-        {
-            Success = "Cliente criado com sucesso.";
-            return RedirectToPage("/Clientes/Index");
-        }
-
-        var msg = await res.Content.ReadAsStringAsync(ct);
-        ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(msg) ? "Falha ao criar cliente." : msg);
-        return Page();
+        await _repo.CreateAsync(cli, ct);
+        Success = "Cliente criado com sucesso.";
+        return RedirectToPage("/Clientes/Index");
     }
 
     public class ClienteForm

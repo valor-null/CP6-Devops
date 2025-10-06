@@ -1,20 +1,17 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Net.Http.Json;
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using DimDim.Core.Interfaces;
 
 namespace DimDim.Web.Pages.Clientes;
 
 public class EditModel : PageModel
 {
-    private readonly IHttpClientFactory _httpFactory;
-    private readonly JsonSerializerOptions _json;
+    private readonly IClienteRepository _repo;
 
-    public EditModel(IHttpClientFactory httpFactory, JsonSerializerOptions json)
+    public EditModel(IClienteRepository repo)
     {
-        _httpFactory = httpFactory;
-        _json = json;
+        _repo = repo;
     }
 
     [TempData]
@@ -29,18 +26,13 @@ public class EditModel : PageModel
     public async Task<IActionResult> OnGetAsync(CancellationToken ct)
     {
         if (Id <= 0) return RedirectToPage("/Clientes/Index");
+        var cli = await _repo.GetByIdAsync(Id);
+        if (cli is null) return RedirectToPage("/Clientes/Index");
 
-        var client = _httpFactory.CreateClient("Api");
-        var res = await client.GetAsync($"/api/clientes/{Id}", ct);
-        if (res.StatusCode == System.Net.HttpStatusCode.NotFound) return RedirectToPage("/Clientes/Index");
-        res.EnsureSuccessStatusCode();
+        Form.Nome = cli.Nome;
+        Form.Email = cli.Email;
+        Form.CPF = cli.CPF;
 
-        var vm = await res.Content.ReadFromJsonAsync<ClienteVm>(_json, ct);
-        if (vm == null) return RedirectToPage("/Clientes/Index");
-
-        Form.Nome = vm.Nome;
-        Form.Email = vm.Email;
-        Form.CPF = vm.CPF;
         return Page();
     }
 
@@ -49,19 +41,16 @@ public class EditModel : PageModel
         if (Id <= 0) return RedirectToPage("/Clientes/Index");
         if (!ModelState.IsValid) return Page();
 
-        var client = _httpFactory.CreateClient("Api");
-        var payload = new { nome = Form.Nome, email = Form.Email };
-        var res = await client.PutAsJsonAsync($"/api/clientes/{Id}", payload, _json, ct);
+        var cli = await _repo.GetByIdAsync(Id);
+        if (cli is null) return RedirectToPage("/Clientes/Index");
 
-        if (res.IsSuccessStatusCode)
-        {
-            Success = "Cliente atualizado com sucesso.";
-            return RedirectToPage("/Clientes/Index");
-        }
+        cli.Nome = Form.Nome;
+        cli.Email = Form.Email;
+        cli.CPF = Form.CPF;
 
-        var msg = await res.Content.ReadAsStringAsync(ct);
-        ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(msg) ? "Falha ao atualizar cliente." : msg);
-        return Page();
+        await _repo.UpdateAsync(cli);
+        Success = "Cliente atualizado com sucesso.";
+        return RedirectToPage("/Clientes/Index");
     }
 
     public class ClienteForm
@@ -72,15 +61,7 @@ public class EditModel : PageModel
         [Required, EmailAddress, StringLength(255)]
         public string Email { get; set; } = string.Empty;
 
+        [Required, StringLength(14)]
         public string CPF { get; set; } = string.Empty;
-    }
-
-    public class ClienteVm
-    {
-        public int IdCliente { get; set; }
-        public string Nome { get; set; } = string.Empty;
-        public string CPF { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public DateTime DataCadastro { get; set; }
     }
 }

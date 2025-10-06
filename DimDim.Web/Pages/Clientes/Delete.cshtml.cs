@@ -1,19 +1,16 @@
-﻿using System.Text.Json;
-using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using DimDim.Core.Interfaces;
 
 namespace DimDim.Web.Pages.Clientes;
 
 public class DeleteModel : PageModel
 {
-    private readonly IHttpClientFactory _httpFactory;
-    private readonly JsonSerializerOptions _json;
+    private readonly IClienteRepository _repo;
 
-    public DeleteModel(IHttpClientFactory httpFactory, JsonSerializerOptions json)
+    public DeleteModel(IClienteRepository repo)
     {
-        _httpFactory = httpFactory;
-        _json = json;
+        _repo = repo;
     }
 
     [TempData]
@@ -34,11 +31,18 @@ public class DeleteModel : PageModel
     {
         if (Id <= 0) return RedirectToPage("/Clientes/Index");
 
-        var client = _httpFactory.CreateClient("Api");
-        var res = await client.GetAsync($"/api/clientes/{Id}", ct);
-        if (!res.IsSuccessStatusCode) return RedirectToPage("/Clientes/Index");
+        var cli = await _repo.GetByIdAsync(Id);
+        if (cli is null) return RedirectToPage("/Clientes/Index");
 
-        Cliente = await res.Content.ReadFromJsonAsync<ClienteVm>(_json, ct);
+        Cliente = new ClienteVm
+        {
+            IdCliente = cli.IdCliente,
+            Nome = cli.Nome,
+            CPF = cli.CPF,
+            Email = cli.Email,
+            DataCadastro = cli.DataCadastro
+        };
+
         return Page();
     }
 
@@ -46,17 +50,12 @@ public class DeleteModel : PageModel
     {
         if (Id <= 0 || !Confirm) return RedirectToPage("/Clientes/Index");
 
-        var client = _httpFactory.CreateClient("Api");
-        var res = await client.DeleteAsync($"/api/clientes/{Id}", ct);
+        var cli = await _repo.GetByIdAsync(Id);
+        if (cli is null) return RedirectToPage("/Clientes/Index");
 
-        if (res.IsSuccessStatusCode)
-        {
-            Success = "Cliente excluído com sucesso.";
-            return RedirectToPage("/Clientes/Index");
-        }
+        await _repo.DeleteAsync(Id);
 
-        var msg = await res.Content.ReadAsStringAsync(ct);
-        Error = string.IsNullOrWhiteSpace(msg) ? "Não foi possível excluir o cliente." : msg;
+        Success = "Cliente excluído com sucesso.";
         return RedirectToPage("/Clientes/Index");
     }
 

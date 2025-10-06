@@ -40,6 +40,7 @@ builder.Services.AddDbContext<DimDimContext>(options =>
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<IContaCorrenteRepository, ContaCorrenteRepository>();
 builder.Services.AddScoped<ITransacaoRepository, TransacaoRepository>();
+builder.Services.AddApplicationInsightsTelemetry();
 
 builder.Services.AddGlobalProblemDetails();
 

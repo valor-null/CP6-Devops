@@ -1,16 +1,17 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using DimDim.Core.Interfaces;
 
 namespace DimDim.Web.Pages.Transacoes;
 
 public class DepositarModel : PageModel
 {
-    private readonly IHttpClientFactory _httpFactory;
+    private readonly ITransacaoRepository _repo;
 
-    public DepositarModel(IHttpClientFactory httpFactory)
+    public DepositarModel(ITransacaoRepository repo)
     {
-        _httpFactory = httpFactory;
+        _repo = repo;
     }
 
     [BindProperty]
@@ -25,19 +26,16 @@ public class DepositarModel : PageModel
     {
         if (!ModelState.IsValid) return Page();
 
-        var client = _httpFactory.CreateClient("Api");
-        var res = await client.PostAsJsonAsync("/api/transacoes/deposito", new
+        try
         {
-            idConta = Form.IdConta,
-            valor = Form.Valor
-        }, ct);
-
-        if (res.IsSuccessStatusCode)
+            await _repo.DepositarAsync(Form.IdConta, Form.Valor, ct);
             return RedirectToPage("/Transacoes/Index", new { idConta = Form.IdConta });
-
-        var msg = await res.Content.ReadAsStringAsync(ct);
-        ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(msg) ? "Falha no depósito." : msg);
-        return Page();
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            return Page();
+        }
     }
 
     public class DepositoForm

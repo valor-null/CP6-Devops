@@ -1,19 +1,16 @@
-﻿using System.Text.Json;
-using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using DimDim.Core.Interfaces;
 
 namespace DimDim.Web.Pages.Contas;
 
 public class DeleteModel : PageModel
 {
-    private readonly IHttpClientFactory _httpFactory;
-    private readonly JsonSerializerOptions _json;
+    private readonly IContaCorrenteRepository _repo;
 
-    public DeleteModel(IHttpClientFactory httpFactory, JsonSerializerOptions json)
+    public DeleteModel(IContaCorrenteRepository repo)
     {
-        _httpFactory = httpFactory;
-        _json = json;
+        _repo = repo;
     }
 
     [TempData]
@@ -34,11 +31,18 @@ public class DeleteModel : PageModel
     {
         if (Id <= 0) return RedirectToPage("/Contas/Index");
 
-        var client = _httpFactory.CreateClient("Api");
-        var res = await client.GetAsync($"/api/contas/{Id}", ct);
-        if (!res.IsSuccessStatusCode) return RedirectToPage("/Contas/Index");
+        var vm = await _repo.GetByIdAsync(Id, ct);
+        if (vm == null) return RedirectToPage("/Contas/Index");
 
-        Conta = await res.Content.ReadFromJsonAsync<ContaVm>(_json, ct);
+        Conta = new ContaVm
+        {
+            IdConta = vm.IdConta,
+            NumeroConta = vm.NumeroConta,
+            Saldo = vm.Saldo,
+            TipoConta = vm.TipoConta,
+            IdCliente = vm.IdCliente
+        };
+
         return Page();
     }
 
@@ -46,17 +50,8 @@ public class DeleteModel : PageModel
     {
         if (Id <= 0 || !Confirm) return RedirectToPage("/Contas/Index");
 
-        var client = _httpFactory.CreateClient("Api");
-        var res = await client.DeleteAsync($"/api/contas/{Id}", ct);
-
-        if (res.IsSuccessStatusCode)
-        {
-            Success = "Conta excluída com sucesso.";
-            return RedirectToPage("/Contas/Index");
-        }
-
-        var msg = await res.Content.ReadAsStringAsync(ct);
-        Error = string.IsNullOrWhiteSpace(msg) ? "Não foi possível excluir a conta." : msg;
+        await _repo.DeleteAsync(Id, ct);
+        Success = "Conta excluída com sucesso.";
         return RedirectToPage("/Contas/Index");
     }
 

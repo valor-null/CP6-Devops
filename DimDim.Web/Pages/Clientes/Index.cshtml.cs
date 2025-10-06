@@ -1,29 +1,31 @@
-﻿using System.Text.Json;
+﻿using System.Linq;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using DimDim.Core.Interfaces;
 
 namespace DimDim.Web.Pages.Clientes;
 
 public class IndexModel : PageModel
 {
-    private readonly IHttpClientFactory _httpFactory;
-    private readonly JsonSerializerOptions _json;
+    private readonly IClienteRepository _repo;
 
     public List<ClienteVm> Clientes { get; private set; } = new();
 
-    public IndexModel(IHttpClientFactory httpFactory, JsonSerializerOptions json)
+    public IndexModel(IClienteRepository repo)
     {
-        _httpFactory = httpFactory;
-        _json = json;
+        _repo = repo;
     }
 
     public async Task OnGetAsync(CancellationToken ct)
     {
-        var client = _httpFactory.CreateClient("Api");
-        using var res = await client.GetAsync("/api/clientes", ct);
-        res.EnsureSuccessStatusCode();
-        await using var stream = await res.Content.ReadAsStreamAsync(ct);
-        var data = await System.Text.Json.JsonSerializer.DeserializeAsync<List<ClienteVm>>(stream, _json, ct);
-        Clientes = data ?? new List<ClienteVm>();
+        var entities = await _repo.GetAllAsync(); 
+        Clientes = entities.Select(c => new ClienteVm
+        {
+            IdCliente    = c.IdCliente,
+            Nome         = c.Nome,
+            CPF          = c.CPF,
+            Email        = c.Email,
+            DataCadastro = c.DataCadastro
+        }).ToList();
     }
 
     public record ClienteVm

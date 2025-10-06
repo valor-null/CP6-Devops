@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.23.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.7" PrivateAssets="All" />
     </ItemGroup>

@@ -1,20 +1,17 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Net.Http.Json;
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using DimDim.Core.Interfaces;
 
 namespace DimDim.Web.Pages.Contas;
 
 public class EditModel : PageModel
 {
-    private readonly IHttpClientFactory _httpFactory;
-    private readonly JsonSerializerOptions _json;
+    private readonly IContaCorrenteRepository _repo;
 
-    public EditModel(IHttpClientFactory httpFactory, JsonSerializerOptions json)
+    public EditModel(IContaCorrenteRepository repo)
     {
-        _httpFactory = httpFactory;
-        _json = json;
+        _repo = repo;
     }
 
     [TempData]
@@ -30,11 +27,7 @@ public class EditModel : PageModel
     {
         if (Id <= 0) return RedirectToPage("/Contas/Index");
 
-        var client = _httpFactory.CreateClient("Api");
-        var res = await client.GetAsync($"/api/contas/{Id}", ct);
-        if (!res.IsSuccessStatusCode) return RedirectToPage("/Contas/Index");
-
-        var vm = await res.Content.ReadFromJsonAsync<ContaVm>(_json, ct);
+        var vm = await _repo.GetByIdAsync(Id, ct);
         if (vm == null) return RedirectToPage("/Contas/Index");
 
         Form.NumeroConta = vm.NumeroConta;
@@ -49,18 +42,9 @@ public class EditModel : PageModel
         if (Id <= 0) return RedirectToPage("/Contas/Index");
         if (!ModelState.IsValid) return Page();
 
-        var client = _httpFactory.CreateClient("Api");
-        var res = await client.PutAsJsonAsync($"/api/contas/{Id}/tipo", new { tipoConta = Form.TipoConta }, _json, ct);
-
-        if (res.IsSuccessStatusCode)
-        {
-            Success = "Conta atualizada com sucesso.";
-            return RedirectToPage("/Contas/Index");
-        }
-
-        var msg = await res.Content.ReadAsStringAsync(ct);
-        ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(msg) ? "Falha ao atualizar conta." : msg);
-        return Page();
+        await _repo.UpdateTipoAsync(Id, Form.TipoConta, ct);
+        Success = "Conta atualizada com sucesso.";
+        return RedirectToPage("/Contas/Index");
     }
 
     public class ContaForm

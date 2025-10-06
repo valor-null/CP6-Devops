@@ -3,30 +3,43 @@
 @{
     ViewData["Title"] = "Depósito";
 }
-<section class="title">Depósito em Conta</section>
-<section class="card">
-    <form method="post" style="display:flex;flex-direction:column;gap:16px;">
-        <div asp-validation-summary="ModelOnly" class="td" style="color:#b91c1c;"></div>
 
-        <div class="row" style="display:flex;gap:16px;align-items:center;padding:10px 12px;">
-            <label for="IdConta" style="width:140px;">ID da Conta</label>
-            <input id="IdConta" asp-for="Form.IdConta" type="number" min="1" style="flex:1;padding:10px 12px;border-radius:12px;border:2px solid var(--accent);background:#fff;" />
-            <span asp-validation-for="Form.IdConta" style="color:#b91c1c;"></span>
-        </div>
-
-        <div class="row" style="display:flex;gap:16px;align-items:center;padding:10px 12px;">
-            <label for="Valor" style="width:140px;">Valor</label>
-            <input id="Valor" asp-for="Form.Valor" type="number" step="0.01" min="0.01" style="flex:1;padding:10px 12px;border-radius:12px;border:2px solid var(--accent);background:#fff;" />
-            <span asp-validation-for="Form.Valor" style="color:#b91c1c;"></span>
-        </div>
-
-        <div style="display:flex;gap:12px;justify-content:flex-end;">
-            <a asp-page="/Transacoes/Index" asp-route-idConta="@Model.Form.IdConta" style="padding:10px 16px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;text-decoration:none;color:#111;">Voltar ao Extrato</a>
-            <button type="submit" style="padding:10px 16px;border:2px solid var(--accent);border-radius:12px;background:#fff;font-weight:700;cursor:pointer;">Depositar</button>
-        </div>
-    </form>
+<section class="page-header container">
+    <h1>Depósito</h1>
+    <a asp-page="/Transacoes/Index" asp-route-idConta="@Model.Form.IdConta" class="btn-ghost">
+        <i class="bi bi-arrow-left me-1"></i>Voltar
+    </a>
 </section>
 
+<div class="container">
+    <div class="form-card">
+        <form method="post" class="d-flex flex-column gap-3">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-row">
+                <label asp-for="Form.IdConta"></label>
+                <input asp-for="Form.IdConta" />
+            </div>
+            <span asp-validation-for="Form.IdConta" class="text-danger"></span>
+
+            <div class="form-row">
+                <label asp-for="Form.Valor"></label>
+                <input asp-for="Form.Valor" type="number" step="0.01" />
+            </div>
+            <span asp-validation-for="Form.Valor" class="text-danger"></span>
+
+            <div class="form-actions">
+                <a asp-page="/Transacoes/Index" asp-route-idConta="@Model.Form.IdConta" class="btn-ghost">
+                    <i class="bi bi-x-lg me-1"></i>Cancelar
+                </a>
+                <button type="submit" class="btn btn-dark">
+                    <i class="bi bi-check2-circle me-1"></i>Confirmar depósito
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    <partial name="/Pages/Shared/_ValidationScriptsPartial.cshtml" />
 }

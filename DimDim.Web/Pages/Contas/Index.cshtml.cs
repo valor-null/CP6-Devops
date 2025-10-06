@@ -1,17 +1,16 @@
-﻿using System.Text.Json;
+﻿using System.Linq;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using DimDim.Core.Interfaces;
 
 namespace DimDim.Web.Pages.Contas;
 
 public class IndexModel : PageModel
 {
-    private readonly IHttpClientFactory _httpFactory;
-    private readonly JsonSerializerOptions _json;
+    private readonly IContaCorrenteRepository _repo;
 
-    public IndexModel(IHttpClientFactory httpFactory, JsonSerializerOptions json)
+    public IndexModel(IContaCorrenteRepository repo)
     {
-        _httpFactory = httpFactory;
-        _json = json;
+        _repo = repo;
     }
 
     public List<ContaVm> Contas { get; private set; } = new();
@@ -21,16 +20,19 @@ public class IndexModel : PageModel
     {
         try
         {
-            var client = _httpFactory.CreateClient("Api");
-            using var res = await client.GetAsync("/api/contas", ct);
-            res.EnsureSuccessStatusCode();
-            await using var stream = await res.Content.ReadAsStreamAsync(ct);
-            var data = await System.Text.Json.JsonSerializer.DeserializeAsync<List<ContaVm>>(stream, _json, ct);
-            Contas = data ?? new List<ContaVm>();
+            var data = await _repo.GetAllAsync(ct);
+            Contas = data.Select(c => new ContaVm
+            {
+                IdConta = c.IdConta,
+                NumeroConta = c.NumeroConta,
+                Saldo = c.Saldo,
+                TipoConta = c.TipoConta,
+                IdCliente = c.IdCliente
+            }).ToList();
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Falha ao contatar a API: {ex.Message}";
+            ErrorMessage = $"Falha ao carregar contas: {ex.Message}";
             Contas = new List<ContaVm>();
         }
     }
