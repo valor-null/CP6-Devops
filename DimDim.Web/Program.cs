@@ -7,8 +7,6 @@ using DimDim.Infrastructure.Data;
 using DimDim.Core.Interfaces;
 using DimDim.Infrastructure.Repositories;
 
-
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorPages();
@@ -25,23 +23,19 @@ builder.Services.AddDbContext<DimDimContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection"),
         sql => sql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), null)));
 
-
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<IContaCorrenteRepository, ContaCorrenteRepository>();
 builder.Services.AddScoped<ITransacaoRepository, TransacaoRepository>();
 
-
 var app = builder.Build();
 
 var supportedCultures = new[] { new CultureInfo("pt-BR"), new CultureInfo("en-US") };
-var localizationOptions = new RequestLocalizationOptions
+app.UseRequestLocalization(new RequestLocalizationOptions
 {
     DefaultRequestCulture = new RequestCulture("pt-BR"),
     SupportedCultures = supportedCultures,
     SupportedUICultures = supportedCultures
-};
-app.UseRequestLocalization(localizationOptions);
-
+});
 
 if (!app.Environment.IsDevelopment())
 {
@@ -51,9 +45,19 @@ if (!app.Environment.IsDevelopment())
 else
 {
     app.UseDeveloperExceptionPage();
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<DimDimContext>();
-    db.Database.Migrate();
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<DimDimContext>();
+        db.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex.ToString());
+    }
 }
 
 app.UseHttpsRedirection();
