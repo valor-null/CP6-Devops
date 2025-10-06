@@ -15,25 +15,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: Setup .NET 8 SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: '8.0.x'
 
-      - name: Restore
+      - name: Restore dependencies
         run: dotnet restore ${{ env.PROJECT_PATH }}
 
-      - name: Build (Release)
-        run: dotnet build ${{ env.PROJECT_PATH }} --no-restore -c Release
+      - name: Build in Release mode
+        run: dotnet build ${{ env.PROJECT_PATH }} --configuration Release --no-restore
 
-      - name: Publish
-        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -o ${{ github.workspace }}/${{ env.PUBLISH_DIR }}
+      - name: Publish the project
+        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -o '${{ github.workspace }}/${{ env.PUBLISH_DIR }}'
 
-      - name: List published files (debug)
-        run: ls -la ${{ github.workspace }}/${{ env.PUBLISH_DIR }}
+      - name: Verify published files (debug)
+        run: ls -R ${{ github.workspace }}/${{ env.PUBLISH_DIR }}
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
@@ -41,4 +41,4 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: production
           publish-profile: ${{ secrets.AzureAppService_PublishProfile_e5d418287ba54bbd9992e2256ad3f26e }}
-          package: ${{ github.workspace }}/${{ env.PUBLISH_DIR }}
+          package: '${{ github.workspace }}/${{ env.PUBLISH_DIR }}'
