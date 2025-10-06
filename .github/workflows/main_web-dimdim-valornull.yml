@@ -42,4 +42,3 @@ jobs:
           slot-name: production
           publish-profile: ${{ secrets.AzureAppService_PublishProfile_e5d418287ba54bbd9992e2256ad3f26e }}
           package: ${{ github.workspace }}/${{ env.PUBLISH_DIR }}
-          startup-command: "dotnet DimDim.Web.dll"
