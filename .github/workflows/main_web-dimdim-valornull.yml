@@ -41,4 +41,4 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: production
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_E5D418287BA54BBD9992E2256AD3F26E }}
-          package: ${{ github.workspace }}/${{ env.PUBLISH_DIR }}
+          package: ${{ github.workspace }}/${{ env.PUBLISH_DIR }} 
