@@ -21,7 +21,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.x
+          dotnet-version: 8.0.x
 
       - name: Restore
         run: dotnet restore ${{ env.PROJECT_PATH }}
@@ -41,4 +41,5 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: production
           publish-profile: ${{ secrets.AzureAppService_PublishProfile_e5d418287ba54bbd9992e2256ad3f26e }}
-          package: ${{ github.workspace }}/${{ env.PUBLISH_DIR }} 
+          package: ${{ github.workspace }}/${{ env.PUBLISH_DIR }}
+          startup-command: "dotnet DimDim.Web.dll"
